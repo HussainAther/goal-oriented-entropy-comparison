@@ -1,0 +1,26 @@
+project:
+  type: default
+  render:
+    - main.qmd
+    - README.qmd
+  output-dir: _site
+
+title: "When Goal-Oriented Error Warnings Agree: A Reproducible Comparison of Relative-Entropy and Information-Weighted Diagnostics"
+author:
+  - name: Syed Hussain Ather
+    corresponding: true
+    affiliations:
+      - name: Janus Sphere Innovations Inc.
+      - name: Georgia Institute of Technology
+        department: Online Master of Science in Analytics
+abstract: >-
+  A goal-specific error warning can appear superior simply because its comparator lacks access to the geometry of the predicted quantity. We compare relative-entropy, Fisher-information-weighted and conventional state diagnostics using posterior-fitted nutrient-algae-rotifer dynamics. In 144 posterior-draw confirmation configurations, the entropy warning has AUC 0.9777 versus 0.8965 for a component-scaled state norm but 0.9769 for a Fisher-weighted comparator. The apparent entropy-specific advantage largely disappears in an information-matched comparison. We distinguish internal approximation reliability from independent ecological forecasting and do not claim a new theorem or validated biological forecasts.
+keywords: [goal-oriented error estimation, relative entropy, reproducibility, ecological dynamics, benchmarking]
+bibliography: references.bib
+github-user: HussainAther
+repo: goal-oriented-entropy-comparison
+license: CC-BY-4.0
+format:
+  computo-html: default
+  computo-pdf: default
+jupyter: python3

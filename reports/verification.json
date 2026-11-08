@@ -1,0 +1,54 @@
+{
+  "rows": {
+    "reproduction": 43200,
+    "perturbation": 576,
+    "discovery": 192,
+    "confirmation": 144
+  },
+  "max_reproduction_relative_discrepancy": 0.0006445059762105,
+  "comparator_metrics": {
+    "goal_linear_plus_curvature": {
+      "auc": 0.978484202,
+      "brier": 0.064475725
+    },
+    "entropy_exact": {
+      "auc": 0.977708858,
+      "brier": 0.068084105
+    },
+    "goal_plus_curvature": {
+      "auc": 0.977708858,
+      "brier": 0.068084105
+    },
+    "fisher_norm": {
+      "auc": 0.976933514,
+      "brier": 0.070117948
+    },
+    "goal_linear": {
+      "auc": 0.971699942,
+      "brier": 0.076286052
+    },
+    "fisher_alignment": {
+      "auc": 0.961232797,
+      "brier": 0.085163447
+    },
+    "state_norm": {
+      "auc": 0.896491568,
+      "brier": 0.132038483
+    }
+  },
+  "perturbation_median_D_error": {
+    "5": [
+      0.0028726015419646,
+      0.0002127176187333
+    ],
+    "20": [
+      0.0149200981244029,
+      0.0036192762776716
+    ],
+    "80": [
+      0.0298038171118774,
+      0.0278037910020042
+    ]
+  },
+  "all_checks_passed": true
+}

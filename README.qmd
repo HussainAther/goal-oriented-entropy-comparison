@@ -1,0 +1,15 @@
+---
+format: gfm-commonmark
+---
+
+# When Goal-Oriented Error Warnings Agree
+
+This repository contains a reproducible, scope-limited computational comparison of relative-entropy and information-weighted warning diagnostics in nonlinear ecological dynamics.
+
+## Build
+
+This article uses the [Computo Python template](https://github.com/computorg/template-computo-python). Install Quarto and its Computo extension before running `quarto render`. The article is a working submission candidate and has **not yet passed an official Computo build**.
+
+## Data and code
+
+See [README.md](README.md), [DATA_PROVENANCE_AND_LICENSE.md](DATA_PROVENANCE_AND_LICENSE.md), and [RELEASE_GATE.md](RELEASE_GATE.md).
