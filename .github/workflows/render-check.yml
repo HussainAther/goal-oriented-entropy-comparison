@@ -1,0 +1,48 @@
+name: Verify executable Computo article
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: entropy-comparator
+          environment-file: environment.yml
+          auto-activate-base: false
+
+      - name: Install Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Verify executable article
+        shell: bash -el {0}
+        run: |
+          python --version
+          python -m ipykernel --version
+          quarto --version
+
+          quarto render main.qmd --to computo-html
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v
+
+      - name: Upload rendered article
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: computo-html
+          path: _site/

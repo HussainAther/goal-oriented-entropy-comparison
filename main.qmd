@@ -51,11 +51,109 @@ This identity is standard Bregman geometry [@bregman1967; @banerjee2005]. It exp
 
 # Results
 
+```{python}
+#| label: compute-manuscript-results
+#| include: false
+#| cache: false
+
+from pathlib import Path
+import subprocess
+import sys
+
+from build_release import checks, figures
+
+project_root = Path.cwd().resolve()
+
+for stage in ("perturbation", "features", "confirmation", "comparator"):
+    print(f"Running {stage} stage...", flush=True)
+    subprocess.run(
+        ["sh", "run_stages.sh", stage],
+        cwd=project_root,
+        check=True,
+    )
+
+perturbation_summary, matched_metrics, verification = checks()
+figures(perturbation_summary, matched_metrics)
+
+assert verification["all_checks_passed"]
+import pandas as pd
+
+bootstrap = pd.read_csv(
+    project_root / "code/comparator/cluster_bootstrap.csv"
+)
+
+auc_differences = bootstrap["auc_entropy_minus_fisher_norm"]
+
+auc_ci_low, auc_ci_high = auc_differences.quantile(
+    [0.025, 0.975]
+).to_numpy()
+
+assert auc_ci_low < 0 < auc_ci_high
+
+```
+
 ## Approximation accuracy and perturbation amplitude
 
 Eight posterior draws per treatment group were evaluated across all 24 vessel-specific fitted initial states. At each of $\varepsilon\in\{5,20,80\}$ µmol/L this gives 192 draw–vessel configurations, or 576 configurations in total. At perturbations +5, +20 and +80, median first-order divergence approximation errors were 0.287%, 1.492%, and 2.980%; second-order medians were 0.0213%, 0.362%, and 2.780%. Second-order error was smaller in 192, 191, and 139 of the 192 configurations, respectively. These comparisons concern within-model approximation, not held-out ecological prediction.
 
-![Median time-averaged relative-entropy approximation errors on the three model-internal perturbation regimes. The 192 draw–vessel configurations per amplitude share a fitted posterior.](figures/perturbation.png){fig-alt="Grouped bar chart of first- and second-order approximation error medians at perturbations 5, 20 and 80 micromoles per liter." width=90%}
+```{python}
+#| label: tbl-perturbation
+#| tbl-cap: "Approximation accuracy across nitrogen perturbation amplitudes."
+#| echo: false
+
+from IPython.display import display, Markdown
+
+rows = [
+    "| Perturbation (µmol/L) | First-order median error (%) | Second-order median error (%) | Second-order wins |",
+    "|---|---:|---:|---:|",
+]
+
+for _, r in perturbation_summary.iterrows():
+    rows.append(
+        f"| +{r['delta_N']:.0f} "
+        f"| {100*r['median_D1']:.4f} "
+        f"| {100*r['median_D2']:.4f} "
+        f"| {int(r['D2_wins'])}/{int(r['total_cases'])} |"
+    )
+
+display(Markdown("\n".join(rows)))
+```
+
+
+```{python}
+#| label: fig-perturbation
+#| fig-cap: "Median time-averaged relative-entropy approximation errors on the three model-internal perturbation regimes. The 192 draw–vessel configurations per amplitude share a fitted posterior."
+#| fig-alt: "Grouped bar chart of first- and second-order approximation error medians at perturbations 5, 20 and 80 micromoles per liter."
+#| fig-width: 7
+#| fig-height: 3.6
+#| echo: false
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.arange(len(perturbation_summary))
+width = 0.35
+
+fig, ax = plt.subplots()
+ax.bar(
+    x - width / 2,
+    perturbation_summary["median_D1"].to_numpy() * 100,
+    width,
+    label="First order",
+)
+ax.bar(
+    x + width / 2,
+    perturbation_summary["median_D2"].to_numpy() * 100,
+    width,
+    label="Second order",
+)
+ax.set_xticks(x, labels=["+5", "+20", "+80"])
+ax.set_xlabel("Initial nitrogen perturbation (µmol/L)")
+ax.set_ylabel("Median time-averaged entropy error (%)")
+ax.legend(frameon=False)
+fig.tight_layout()
+plt.show()
+```
 
 ## Equal-information warning comparison
 
@@ -63,9 +161,73 @@ For +20 µmol/L, an exploratory threshold design classifies a configuration as a
 
 All methods use $X,u,w$ and the same temporal window. The entropy correction predictor measures the normalized magnitude of $D_\omega(p_2\mid X)-D_\omega(p_1\mid X)$. The Fisher-weighted state predictor takes a quadratic metric based on the positive reference/first-order prediction; a component-scaled norm provides the coarse state comparator. A goal-gradient feature uses the first term of the Bregman identity. Importantly, the *exact* goal-gradient plus curvature sum **equals** the entropy correction, and therefore must not be counted as a separate independent competitor. A two-feature regression on goal-gradient and curvature is a distinct *calibration architecture*, even though the underlying information is the same.
 
-In 144 confirmation configurations, the entropy indicator yields ROC AUC 0.977709 and Brier score 0.068084. The Fisher-weighted indicator yields AUC 0.976934 and Brier 0.070118. The component-scaled state norm yields AUC 0.896492 and Brier 0.132038; the goal-gradient predictor yields AUC 0.971700 and Brier 0.076286. The entropy–Fisher AUC difference is only 0.000775; the exploratory chemostat-cluster resampling interval of the difference includes zero (about −0.016 to +0.020). AUC comparisons must not be taken as causal evidence that one error estimator contains intrinsically new information.
+In 144 confirmation configurations, the entropy indicator yields ROC AUC 0.977709 and Brier score 0.068084. The Fisher-weighted indicator yields AUC 0.976934 and Brier 0.070118. The component-scaled state norm yields AUC 0.896492 and Brier 0.132038; the goal-gradient predictor yields AUC 0.971700 and Brier 0.076286. The entropy–Fisher AUC difference is only 0.000775; the exploratory chemostat-cluster resampling interval of the difference includes zero (`{python} f"{auc_ci_low:+.3f}"` to `{python} f"{auc_ci_high:+.3f}"`). AUC comparisons must not be taken as causal evidence that one error estimator contains intrinsically new information.
 
-![Held-out posterior-draw warning discrimination. The entropy–Fisher near-tie limits claims of entropy-specific diagnostic superiority.](figures/matched_auc.png){fig-alt="Horizontal bar plot of AUC for entropy correction, Fisher-weighted correction, goal gradient and a component-scaled state norm." width=90%}
+```{python}
+#| label: tbl-matched-diagnostics
+#| tbl-cap: "Matched warning performance on posterior-draw confirmation configurations."
+#| echo: false
+
+method_labels = {
+    "entropy_exact": "Entropy correction",
+    "fisher_norm": "Fisher-weighted",
+    "goal_linear": "Goal-gradient",
+    "state_norm": "Component-scaled state norm",
+}
+
+rows = [
+    "| Diagnostic | ROC AUC | Brier score |",
+    "|---|---:|---:|",
+]
+
+for method, label in method_labels.items():
+    r = matched_metrics.loc[method]
+    rows.append(
+        f"| {label} | {r['auc']:.6f} | {r['brier']:.6f} |"
+    )
+
+display(Markdown("\n".join(rows)))
+```
+
+```{python}
+#| label: fig-matched-auc
+#| fig-cap: "Held-out posterior-draw warning discrimination. The entropy–Fisher near-tie limits claims of entropy-specific diagnostic superiority."
+#| fig-alt: "Horizontal bar plot of AUC for entropy correction, Fisher-weighted correction, goal gradient and a component-scaled state norm."
+#| fig-width: 7
+#| fig-height: 3.4
+#| echo: false
+
+methods = [
+    "entropy_exact",
+    "fisher_norm",
+    "goal_linear",
+    "state_norm",
+]
+
+labels = [
+    "Entropy correction",
+    "Fisher-weighted",
+    "Goal-gradient",
+    "Component-scaled state norm",
+]
+
+values = matched_metrics.loc[methods, "auc"].to_numpy(dtype=float)
+
+fig, ax = plt.subplots()
+y = np.arange(len(methods))
+
+ax.barh(y, values)
+ax.set_yticks(y, labels=labels)
+ax.set_xlim(0.82, 1.01)
+ax.invert_yaxis()
+ax.set_xlabel("ROC AUC, held-out posterior draws (144 configurations)")
+
+for i, value in enumerate(values):
+    ax.text(value + 0.004, i, f"{value:.3f}", va="center", fontsize=9)
+
+fig.tight_layout()
+plt.show()
+```
 
 # Interpretation and external-validity limits
 
