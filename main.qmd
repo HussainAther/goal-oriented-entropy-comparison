@@ -128,6 +128,7 @@ display(Markdown("\n".join(rows)))
 #| fig-height: 3.6
 #| echo: false
 
+from IPython.display import display
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -152,7 +153,9 @@ ax.set_xlabel("Initial nitrogen perturbation (µmol/L)")
 ax.set_ylabel("Median time-averaged entropy error (%)")
 ax.legend(frameon=False)
 fig.tight_layout()
-plt.show()
+
+display(plt.gcf())
+plt.close()
 ```
 
 ## Equal-information warning comparison
@@ -196,6 +199,7 @@ display(Markdown("\n".join(rows)))
 #| fig-width: 7
 #| fig-height: 3.4
 #| echo: false
+from IPython.display import display
 
 methods = [
     "entropy_exact",
@@ -226,7 +230,8 @@ for i, value in enumerate(values):
     ax.text(value + 0.004, i, f"{value:.3f}", va="center", fontsize=9)
 
 fig.tight_layout()
-plt.show()
+display(plt.gcf())
+plt.close()
 ```
 
 # Interpretation and external-validity limits
