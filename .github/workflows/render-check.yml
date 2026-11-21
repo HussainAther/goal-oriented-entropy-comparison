@@ -33,6 +33,7 @@ jobs:
           python -m ipykernel --version
           quarto --version
 
+          python code/compartment/run_benchmark.py
           quarto render main.qmd --to computo-html
 
           python -m unittest discover \
