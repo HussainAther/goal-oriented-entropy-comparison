@@ -3,7 +3,7 @@
 
 Finite-time reliability of a dynamical approximation and prediction of a measured ecological outcome are different questions. A first- or second-order expansion may approximate a nonlinear model internally without the underlying model forecasting experiments excluded from its fitting. A second ambiguity concerns the choice of diagnostic: a goal-specific indicator can easily outperform an unrelated state norm even when no unique goal-specific information is present. Goal-oriented a posteriori estimation and adjoint methods already address errors in chosen observables [@becker2001; @cao2004; @giles2002]. The relevant scientific question is therefore not whether entropy-aware diagnostics can outperform every possible state metric, but what remains when the comparator has equivalent model and geometric information.
 
-We study a reproducible example based on the posterior-fitted ecological ordinary differential equations used by @wojcik2025. The paper's contribution is intentionally narrow: (a) reproduce the published posterior-predictive dynamics; (b) examine amplitude-dependent finite-time approximation errors; (c) compare multiple warning indicators under matched reference trajectories, Taylor information and calibration budgets; and (d) show the limit of transferring within-model reliability claims to actual held-out ecological data. We do not introduce a new Bregman identity, a novel adjoint method or a general validated certificate.
+We study two reproducible nonlinear dynamical benchmarks: posterior-fitted ecological ordinary differential equations used by @wojcik2025 and an independently generated synthetic two-compartment system with saturating transfer. The paper's contribution is intentionally narrow: (a) reproduce the published posterior-predictive dynamics; (b) examine amplitude-dependent finite-time approximation errors; (c) compare multiple warning indicators under matched reference trajectories, Taylor information and calibration budgets; and (d) show the limit of transferring within-model reliability claims to actual held-out ecological data. We do not introduce a new Bregman identity, a novel adjoint method or a general validated certificate.
 
 # Ecological system and numerical protocol
 
@@ -234,9 +234,78 @@ display(plt.gcf())
 plt.close()
 ```
 
+
+
+## Independent nonlinear compartment benchmark
+
+To examine whether the ecological findings extend beyond a single dynamical system, we introduce a second, structurally distinct synthetic benchmark: a positive-state two-compartment model with saturating nonlinear transfer,
+
+$$\begin{aligned} \dot{x}_1 &= -\alpha x_1-\frac{kx_1}{K+x_1}+\rho x_2,\\ \dot{x}_2 &= \frac{kx_1}{K+x_1}-(\beta+\rho)x_2. \end{aligned}$$
+
+We perturb the initial condition of the first compartment, retaining the same first- and second-order sensitivity convention, generalized relative-entropy divergence, diagnostic definitions, and 1% first-order warning threshold used in the ecological experiment. The synthetic parameter ensemble is independently generated rather than sampled from the ecological posterior. The fixed-seed experiment contains 192 discovery and 144 held-out confirmation configurations. These configurations are independent of the ecological cases, although cases within a synthetic ensemble may share design structure.
+
+```{python}
+#| label: tbl-compartment-metrics
+#| tbl-cap: "Held-out warning prediction in the nonlinear compartment benchmark. AUC is higher-is-better; Brier score is lower-is-better."
+from IPython.display import display, Markdown
+
+compartment_dir = project_root / "code/compartment"
+compartment_cases = pd.read_csv(compartment_dir / "cases.csv")
+compartment_metrics = pd.read_csv(compartment_dir / "metrics.csv")
+compartment_bootstrap = pd.read_csv(compartment_dir / "bootstrap.csv")
+
+compartment_display = compartment_metrics.copy()
+compartment_display["auc"] = compartment_display["auc"].map(lambda x: f"{x:.6f}")
+compartment_display["brier"] = compartment_display["brier"].map(lambda x: f"{x:.6f}")
+display(Markdown(
+    "| Method | AUC | Brier |\n"
+    "|---|---:|---:|\n"
+    + "".join(
+        f"| {r.method} | {r.auc} | {r.brier} |\n"
+        for r in compartment_display.itertuples(index=False)
+    )
+))
+
+```
+
+The confirmation results show a sharp distinction between Fisher-based features. Entropy correction attains AUC 1.000000 and Brier score 0.031874, compared with AUC 0.754717 and Brier 0.183945 for the Fisher-weighted norm. In contrast, Fisher alignment attains AUC 0.998549 and Brier 0.033027, nearly matching entropy. The goal-linear feature also performs strongly. Thus, the observed disagreement is specific to the norm-based comparator and does not imply that all Fisher-geometric diagnostics are inferior.
+
+```{python}
+#| label: tbl-compartment-bootstrap
+#| tbl-cap: "Bootstrap intervals for entropy-minus-Fisher differences in the nonlinear compartment benchmark."
+comparison_columns = {
+    "AUC: entropy − Fisher norm": "auc_entropy_minus_fisher_norm",
+    "Brier: entropy − Fisher norm": "brier_entropy_minus_fisher_norm",
+    "AUC: entropy − Fisher alignment": "auc_entropy_minus_fisher_alignment",
+    "Brier: entropy − Fisher alignment": "brier_entropy_minus_fisher_alignment",
+}
+
+comparison_rows = []
+for label, column in comparison_columns.items():
+    low, high = compartment_bootstrap[column].quantile([0.025, 0.975])
+    comparison_rows.append({
+        "Comparison": label,
+        "95% bootstrap interval": f"[{low:+.4f}, {high:+.4f}]",
+    })
+
+display(Markdown(
+    "| Comparison | 95% bootstrap interval |\n"
+    "|---|---|\n"
+    + "".join(
+        f"| {r['Comparison']} | {r['95% bootstrap interval']} |\n"
+        for r in comparison_rows
+    )
+))
+
+```
+
+The bootstrap intervals exclude zero for both entropy-minus-Fisher-norm differences, but the Brier difference relative to Fisher alignment includes zero. The alignment AUC interval reaches zero at its lower endpoint. These findings suggest that the predictive agreement observed in the ecological benchmark is not universal and depends on which aspects of local geometry the comparator retains.
+
+Several qualifications are essential. The second benchmark is synthetic, with a prespecified parameter-generating mechanism rather than posterior uncertainty from observations. The warning label and entropy predictor both depend on the same divergence functional, creating a close mathematical relationship that can contribute to predictive performance. The 1% threshold is transferred from the ecological analysis rather than independently validated for this model. Finally, the bootstrap quantifies variation under the sampled synthetic design, not uncertainty over the space of possible dynamical systems. The results therefore demonstrate a counterexample to universal diagnostic agreement, not universal superiority of entropy-based diagnostics.
+
 # Interpretation and external-validity limits
 
-This comparison demonstrates a benchmark-design effect rather than a new mathematical identity: an apparently large benefit over an unweighted or component-scaled norm becomes negligible against a reference-informed Fisher-weighted diagnostic. A meaningful comparison must match access to reference trajectories, Taylor order, observable geometry, calibration examples and computational budgets. This is consistent with longstanding goal-oriented estimation and Bregman information geometry, rather than contradicting those approaches.
+The two benchmarks reveal a dependence on diagnostic construction and dynamical setting. In the ecological system, the apparent entropy advantage over a component-scaled state norm nearly disappears against a reference-informed Fisher norm. In the synthetic compartment system, entropy substantially outperforms Fisher norm, while Fisher alignment nearly matches entropy. Equal access to reference trajectories, Taylor information, and calibration examples therefore does not guarantee equivalent predictive performance across diagnostic features. The warning label and entropy predictor share a divergence-based construction, and the synthetic ensemble is not an independent observational validation. These results are consistent with goal-oriented estimation and Bregman information geometry, rather than establishing a new identity or theorem.
 
 An exploratory chemostat-holdout forecasting analysis using separately refitted simplified mechanistic parameters did not beat a day-2 persistence forecast on observed algal and rotifer biomass (mean absolute natural-log errors approximately 0.895 versus 0.746 for the 23 matched valid vessels under one latent-nitrogen strategy). This negative result is supplementary: the original Stan model was not refitted under the exact same holdout setup, nutrient concentrations were unobserved and one model run failed. It should not be read as a refutation of the published ecological model.
 
@@ -244,13 +313,15 @@ Independent validated numerical certification of a continuous latent-state uncer
 
 # Conclusions
 
-The reproducible evidence supports a specific limitation on claims of goal-specific diagnostic superiority: when the comparison baseline is given the same geometric information, relative-entropy corrections and Fisher-weighted state corrections can be nearly indistinguishable as warnings of a defined within-model error. This may inform future benchmarking designs, but the single-model example, exploratory threshold selection and shared posterior fitting restrict generalization. This is a neutral, scope-limited computational comparison and remains subject to the target venue's scientific-significance and reproducibility review.
+Across two reproducible nonlinear dynamical benchmarks, agreement between relative-entropy and Fisher-based approximation warnings is not universal. In posterior-fitted ecological dynamics, entropy and Fisher norm have nearly identical held-out discrimination. In the synthetic nonlinear compartment system, entropy substantially outperforms Fisher norm, whereas Fisher alignment remains close to entropy. The results highlight the importance of feature construction and benchmark design, not a general ranking of information-geometric diagnostics.
+
+These experiments evaluate finite-time, within-model approximation warnings. Ecological posterior draws are not independent biological experiments, and the synthetic ensemble does not represent observational uncertainty. The shared divergence-based construction of the warning target and entropy predictor limits general interpretation. Independent ecological forecast validation and certified error bounds remain outside the demonstrated results.
 
 # Reproducibility and data availability
 
-The analysis source, draw tables, figures and verification assertions are included in this working repository. Running `./run_stages.sh perturbation` followed by the remaining stages in `README.md` recomputes the 576 perturbation outcomes and 336 matched-comparator feature records from posterior draws and then generates the figures and checks. The archived posterior-curve reconstruction is checked separately; its original published data archive and R posterior-export process are an external upstream prerequisite. The original ecological data and posterior objects are distributed through Dryad under CC0 [@wojcikdata2025]; numeric posterior draw tables in this package were exported from those fitted objects. The published data should still be cited and the export procedure documented as an upstream prerequisite. The present package includes reproducible downstream Python analyses but not a rerun of the original Stan fitting. A clean-environment rebuild and official journal Quarto render must pass before submission; this repository is a reproducibility candidate, not a verified publication artifact.
+The repository contains the ecological analysis source, exported posterior draw tables, numerical checks, figures, and an independently generated synthetic nonlinear compartment benchmark. The ecological stages documented in `README.md` and `run_stages.sh` regenerate perturbation and matched-comparator results from exported posterior draws. Original ecological posterior fitting and R-based export remain upstream prerequisites. The original data and posterior objects are available through Dryad under CC0 [@wojcikdata2025].
 
-
+The synthetic benchmark is regenerated with `python code/compartment/run_benchmark.py`. It produces case-level records, held-out metrics, predictions, and 1,500 bootstrap replicates using fixed seeds. Its 192 discovery and 144 confirmation configurations are distinct from the ecological posterior cases. Repeated execution reproduced all four CSV files byte-for-byte in the tested environment. Quarto executes Python code to summarize these results. The repository's render-check workflow regenerates the synthetic outputs before rendering. Downstream computational reproducibility does not establish independent predictive validation.
 
 # Responsible use of AI tools
 
