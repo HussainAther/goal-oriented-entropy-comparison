@@ -303,9 +303,99 @@ The bootstrap intervals exclude zero for both entropy-minus-Fisher-norm differen
 
 Several qualifications are essential. The second benchmark is synthetic, with a prespecified parameter-generating mechanism rather than posterior uncertainty from observations. The warning label and entropy predictor both depend on the same divergence functional, creating a close mathematical relationship that can contribute to predictive performance. The 1% threshold is transferred from the ecological analysis rather than independently validated for this model. Finally, the bootstrap quantifies variation under the sampled synthetic design, not uncertainty over the space of possible dynamical systems. The results therefore demonstrate a counterexample to universal diagnostic agreement, not universal superiority of entropy-based diagnostics.
 
+
+
+## Exploratory sensitivity to the warning target
+
+The divergence-error warning and entropy-based predictor share the same
+divergence functional. To examine how this relationship affects diagnostic
+rankings, we performed an exploratory analysis using the same nonlinear
+compartment configurations and diagnostic features, but replaced the warning
+target with relative first-order state-trajectory approximation error,
+
+$$E_{\mathrm{state}} = \frac{\left\Vert{}x_{\mathrm{actual}}-p_1\right\Vert{}_2} {\max(\left\Vert{}x_{\mathrm{actual}}\right\Vert{}_2,10^{-12})}.$$
+
+The Euclidean norm aggregates both compartments over the 41 sampled time
+points. A warning is issued when this relative error exceeds 0.1%.
+This threshold was selected after inspecting error distributions, including
+those of the confirmation split; therefore, the analysis is exploratory
+rather than an independently prespecified confirmatory test. The original
+192 discovery and 144 confirmation configurations are retained, and
+logistic calibration is refitted using the new warning labels.
+
+```{python}
+#| label: tbl-state-sensitivity
+#| tbl-cap: "Exploratory warning-target sensitivity in the nonlinear compartment benchmark. All AUCs use the same 144 confirmation configurations."
+
+state_metrics = pd.read_csv(
+    compartment_dir / "state_sensitivity_metrics.csv"
+)
+comparison = compartment_metrics[["method", "auc"]].merge(
+    state_metrics[["method", "auc", "brier"]],
+    on="method",
+    suffixes=("_divergence", "_trajectory"),
+)
+
+display(Markdown(
+    "| Diagnostic | Divergence-warning AUC | Trajectory-warning AUC | Trajectory-warning Brier |\n"
+    "|---|---:|---:|---:|\n"
+    + "".join(
+        f"| {r.method} | {r.auc_divergence:.4f} | "
+        f"{r.auc_trajectory:.4f} | {r.brier:.4f} |\n"
+        for r in comparison.itertuples(index=False)
+    )
+))
+
+```
+
+The trajectory-error target produces 112 warnings among 192 discovery
+configurations and 86 among 144 confirmation configurations. Fisher norm
+achieves AUC 0.9513 and Brier score 0.0950, compared with entropy AUC
+0.7971 and Brier score 0.1794. State norm also performs strongly
+(AUC 0.9503). This reverses the entropy-versus-Fisher-norm ranking
+observed for divergence-error warnings.
+
+```{python}
+#| label: tbl-state-sensitivity-bootstrap
+#| tbl-cap: "Paired confirmation-case bootstrap intervals for exploratory trajectory-error warnings. Differences are entropy minus the comparator."
+
+state_boot = pd.read_csv(
+    compartment_dir / "state_sensitivity_bootstrap.csv"
+)
+
+state_rows = []
+for comparator in ("fisher_norm", "fisher_alignment", "state_norm"):
+    for metric in ("auc", "brier"):
+        col = f"{metric}_entropy_minus_{comparator}"
+        low, high = state_boot[col].quantile([0.025, 0.975])
+        state_rows.append(
+            f"| {metric.upper()} versus {comparator} | "
+            f"[{low:+.4f}, {high:+.4f}] |\n"
+        )
+
+display(Markdown(
+    "| Entropy-minus-comparator difference | 95% bootstrap interval |\n"
+    "|---|---|\n"
+    + "".join(state_rows)
+))
+
+```
+
+For entropy minus Fisher norm, the trajectory-warning AUC difference is
+−0.1542 (95% paired-bootstrap interval [−0.2262, −0.0850]); the Brier
+difference is +0.0843 (interval [+0.0498, +0.1181]). Both comparisons
+favor Fisher norm. These intervals resample confirmation cases while
+holding the fitted classifiers fixed; they do not incorporate uncertainty
+from refitting the discovery-stage calibration models.
+
+This sensitivity analysis demonstrates target-dependent diagnostic
+rankings within the specified synthetic ensemble. It does not establish
+universal superiority for any feature or provide independent
+observational validation.
+
 # Interpretation and external-validity limits
 
-The two benchmarks reveal a dependence on diagnostic construction and dynamical setting. In the ecological system, the apparent entropy advantage over a component-scaled state norm nearly disappears against a reference-informed Fisher norm. In the synthetic compartment system, entropy substantially outperforms Fisher norm, while Fisher alignment nearly matches entropy. Equal access to reference trajectories, Taylor information, and calibration examples therefore does not guarantee equivalent predictive performance across diagnostic features. The warning label and entropy predictor share a divergence-based construction, and the synthetic ensemble is not an independent observational validation. These results are consistent with goal-oriented estimation and Bregman information geometry, rather than establishing a new identity or theorem.
+The two benchmarks reveal a dependence on diagnostic construction and dynamical setting. In the ecological system, the apparent entropy advantage over a component-scaled state norm nearly disappears against a reference-informed Fisher norm. In the synthetic compartment system, entropy substantially outperforms Fisher norm, while Fisher alignment nearly matches entropy. Equal access to reference trajectories, Taylor information, and calibration examples therefore does not guarantee equivalent predictive performance across diagnostic features. The exploratory trajectory-error sensitivity analysis reverses the entropy-versus-Fisher-norm ranking, indicating that predictive performance depends on the warning target as well as feature construction. The original warning label and entropy predictor share a divergence-based construction, and the synthetic ensemble is not an independent observational validation. These results are consistent with goal-oriented estimation and Bregman information geometry, rather than establishing a new identity or theorem.
 
 An exploratory chemostat-holdout forecasting analysis using separately refitted simplified mechanistic parameters did not beat a day-2 persistence forecast on observed algal and rotifer biomass (mean absolute natural-log errors approximately 0.895 versus 0.746 for the 23 matched valid vessels under one latent-nitrogen strategy). This negative result is supplementary: the original Stan model was not refitted under the exact same holdout setup, nutrient concentrations were unobserved and one model run failed. It should not be read as a refutation of the published ecological model.
 
@@ -313,7 +403,7 @@ Independent validated numerical certification of a continuous latent-state uncer
 
 # Conclusions
 
-Across two reproducible nonlinear dynamical benchmarks, agreement between relative-entropy and Fisher-based approximation warnings is not universal. In posterior-fitted ecological dynamics, entropy and Fisher norm have nearly identical held-out discrimination. In the synthetic nonlinear compartment system, entropy substantially outperforms Fisher norm, whereas Fisher alignment remains close to entropy. The results highlight the importance of feature construction and benchmark design, not a general ranking of information-geometric diagnostics.
+Across two reproducible nonlinear dynamical benchmarks, agreement between relative-entropy and Fisher-based approximation warnings is not universal. In posterior-fitted ecological dynamics, entropy and Fisher norm have nearly identical held-out discrimination. In the synthetic nonlinear compartment system, entropy substantially outperforms Fisher norm, whereas Fisher alignment remains close to entropy. An exploratory alternative trajectory-error warning reverses the entropy-versus-Fisher-norm ranking, with Fisher norm achieving AUC 0.9513 versus 0.7971 for entropy. The results highlight the importance of warning-target definition, feature construction, and benchmark design, not a general ranking of information-geometric diagnostics.
 
 These experiments evaluate finite-time, within-model approximation warnings. Ecological posterior draws are not independent biological experiments, and the synthetic ensemble does not represent observational uncertainty. The shared divergence-based construction of the warning target and entropy predictor limits general interpretation. Independent ecological forecast validation and certified error bounds remain outside the demonstrated results.
 
@@ -321,7 +411,7 @@ These experiments evaluate finite-time, within-model approximation warnings. Eco
 
 The repository contains the ecological analysis source, exported posterior draw tables, numerical checks, figures, and an independently generated synthetic nonlinear compartment benchmark. The ecological stages documented in `README.md` and `run_stages.sh` regenerate perturbation and matched-comparator results from exported posterior draws. Original ecological posterior fitting and R-based export remain upstream prerequisites. The original data and posterior objects are available through Dryad under CC0 [@wojcikdata2025].
 
-The synthetic benchmark is regenerated with `python code/compartment/run_benchmark.py`. It produces case-level records, held-out metrics, predictions, and 1,500 bootstrap replicates using fixed seeds. Its 192 discovery and 144 confirmation configurations are distinct from the ecological posterior cases. Repeated execution reproduced all four CSV files byte-for-byte in the tested environment. Quarto executes Python code to summarize these results. The repository's render-check workflow regenerates the synthetic outputs before rendering. Downstream computational reproducibility does not establish independent predictive validation.
+The synthetic benchmark is regenerated with `python code/compartment/run_benchmark.py`. It produces case-level records, held-out metrics, predictions, and 1,500 bootstrap replicates using fixed seeds. Its 192 discovery and 144 confirmation configurations are distinct from the ecological posterior cases. Repeated execution reproduced all four CSV files byte-for-byte in the tested environment. Quarto executes Python code to summarize these results. The exploratory trajectory-error sensitivity analysis is regenerated with `python code/compartment/run_state_sensitivity.py`, producing separate case records, predictions, metrics, and 1,500 paired-bootstrap replicates. Its 0.1% warning threshold was selected after examining error distributions, including confirmation cases. The repository's render-check workflow regenerates both the original synthetic benchmark and the exploratory sensitivity-analysis outputs before rendering the expanded manuscript. Downstream computational reproducibility does not establish independent predictive validation.
 
 # Responsible use of AI tools
 

@@ -76,6 +76,13 @@ def one_case(split, case_id, rng):
     err1 = float(np.mean(np.abs(d1[valid] - dtrue[valid]) / dtrue[valid]))
     err2 = float(np.mean(np.abs(d2[valid] - dtrue[valid]) / dtrue[valid]))
 
+    # Relative L2 trajectory error of the first-order approximation.
+    state_error1 = float(
+        np.linalg.norm(actual - p1) /
+        max(np.linalg.norm(actual), 1e-12)
+    )
+
+
     # Exact Bregman decomposition: D(p2,X)-D(p1,X) = S+C.
     S = np.sum(h * np.log(p1 / X) / y0, axis=1)
     C = divergence(p2, p1, y0)
@@ -93,7 +100,7 @@ def one_case(split, case_id, rng):
 
     return dict(split=split, case_id=case_id, alpha=alpha, beta=beta, k=k,
                 K=K, rho=rho, x10=x10, x20=x20, epsilon=eps,
-                D_error1=err1, D_error2=err2,
+                D_error1=err1, D_error2=err2, state_error1=state_error1,
                 label=int(err1 > WARNING_THRESHOLD),
                 entropy_exact=float(np.mean(np.abs(S[pos] + C[pos]) / denom)),
                 goal_linear=float(np.mean(np.abs(S[pos]) / denom)),

@@ -34,6 +34,7 @@ jobs:
           quarto --version
 
           python code/compartment/run_benchmark.py
+          python code/compartment/run_state_sensitivity.py
           quarto render main.qmd --to computo-html
 
           python -m unittest discover \
