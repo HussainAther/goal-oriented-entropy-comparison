@@ -49,6 +49,65 @@ $$
 
 This identity is standard Bregman geometry [@bregman1967; @banerjee2005]. It explains metric alignment, but is not our novel theorem. Positivity of $X,p_1,p_2$ is checked. All first- and second-order comparisons use identical reference and perturbation dynamics. The time-averaged error uses the exact perturbed model divergence as its within-model target, with near-zero divergence times excluded according to the archived numerical protocol.
 
+## Warning target and diagnostic construction
+
+For the ecological benchmark, let $x_\varepsilon(t)$ denote the numerically integrated nonlinear solution initialized at $X(0)+\varepsilon e_N$. Define
+
+$$
+d_*(t)=D_\omega(x_\varepsilon(t)\mid X(t)),\qquad
+d_1(t)=D_\omega(p_1(t)\mid X(t)).
+$$
+
+The first-order relative divergence error is
+
+$$
+E_D=\frac{1}{|\mathcal T_*|}
+\sum_{t\in\mathcal T_*}
+\frac{|d_1(t)-d_*(t)|}{d_*(t)},\qquad
+\mathcal T_*=\{t\in\mathcal T:d_*(t)>10^{-10}\}.
+$$
+
+The numerical grid comprises 41 equally spaced points over $0\leq t\leq5$. At the selected perturbation $\varepsilon=20$ µmol/L, the warning label is $Y=\mathbf 1\{E_D>0.01\}$. Thus, the 1% threshold concerns relative error in predicted divergence, not relative error in the ecological state or independent forecasting accuracy.
+
+The warning predictors use only $X,u,w$, without evaluating $x_\varepsilon$. Set $h=\varepsilon^2w$ and define
+
+$$
+S(t)=\sum_i\frac{h_i(t)}{\omega_i}\log\frac{p_{1,i}(t)}{X_i(t)},
+\qquad C(t)=D_\omega(p_2(t)\mid p_1(t)).
+$$
+
+The Bregman identity above gives $D_\omega(p_2\mid X)-D_\omega(p_1\mid X)=S+C$. With $\langle\cdot\rangle_+$ denoting the arithmetic mean over sampled times $t>0$, the entropy-correction and goal-linear indicators are
+
+$$
+I_{\mathrm{entropy}}=
+\left\langle\frac{|S+C|}{\max(d_1,10^{-12})}\right\rangle_+,
+\qquad
+I_{\mathrm{linear}}=
+\left\langle\frac{|S|}{\max(d_1,10^{-12})}\right\rangle_+.
+$$
+
+For a time-dependent Fisher-weighted quadratic norm, define
+
+$$
+\|v\|_{F,t}^2=\sum_i\frac{v_i^2}{p_{1,i}(t)\omega_i}.
+$$
+
+The Fisher-norm indicator is
+
+$$
+I_{\mathrm{Fisher}}=
+\left\langle
+\frac{\|h\|_{F,t}}
+{\max(\|p_1-X\|_{F,t},10^{-12})}
+\right\rangle_+.
+$$
+
+The Fisher-alignment indicator averages the absolute Fisher-weighted inner product of $p_1-X$ and $h$, divided by the squared Fisher norm of $p_1-X$ with a $10^{-12}$ denominator floor. The component-scaled state-norm indicator averages $\|h/\omega\|_2/\max(\|\varepsilon u/\omega\|_2,10^{-14})$.
+
+All ecological predictors share the same reference solution, variation equations, and temporal grid. Their warning calibrators use the same discovery configurations, logarithmic feature transformation, standardization, and regularized logistic-regression procedure. The two-feature goal-linear-plus-curvature calibration differs in feature dimensionality from the single-feature models.
+
+The warning threshold and perturbation were selected during exploration and held fixed for posterior-draw confirmation; they were not preregistered for the entire study. Confirmation draws are distinct from discovery draws but originate from the same posterior fitted to the ecological observations. Consequently, the warning experiment measures within-model discrimination rather than independent biological forecasting performance.
+
 # Results
 
 ```{python}
