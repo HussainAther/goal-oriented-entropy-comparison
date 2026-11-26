@@ -12,4 +12,5 @@ dependencies:
   - jupyter
   - ipykernel
   - pytest=9.2.0
+  - tabulate=0.10.0
   - pip

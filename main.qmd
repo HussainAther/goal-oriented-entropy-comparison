@@ -355,30 +355,22 @@ confirmation.
 #| cache: false
 
 from pathlib import Path
-import subprocess
-import sys
+import pandas as pd
 
-from build_release import checks, figures
+from reproduce_ecology import reproduce_ecology
 
 project_root = Path.cwd().resolve()
 
-for stage in ("perturbation", "features", "confirmation", "comparator"):
-    print(f"Running {stage} stage...", flush=True)
-    subprocess.run(
-        ["sh", "run_stages.sh", stage],
-        cwd=project_root,
-        check=True,
-    )
-
-perturbation_summary, matched_metrics, verification = checks()
-figures(perturbation_summary, matched_metrics)
+(
+    perturbation_summary,
+    matched_metrics,
+    bootstrap,
+    verification,
+) = reproduce_ecology(project_root)
 
 assert verification["all_checks_passed"]
-import pandas as pd
-
-bootstrap = pd.read_csv(
-    project_root / "code/comparator/cluster_bootstrap.csv"
-)
+assert verification["isolated_regeneration"]
+assert verification["verified_archived_files"] == 9
 
 auc_differences = bootstrap["auc_entropy_minus_fisher_norm"]
 
@@ -387,7 +379,6 @@ auc_ci_low, auc_ci_high = auc_differences.quantile(
 ).to_numpy()
 
 assert auc_ci_low < 0 < auc_ci_high
-
 ```
 
 ## Approximation accuracy and perturbation amplitude
@@ -690,6 +681,211 @@ This sensitivity analysis demonstrates target-dependent diagnostic
 rankings within the specified synthetic ensemble. It does not establish
 universal superiority for any feature or provide independent
 observational validation.
+
+
+## Prospective confirmation of target-dependent ranking reversal
+
+The exploratory trajectory-error analysis motivated a
+prospectively specified confirmation experiment within
+the same synthetic compartment-model generating
+distribution. The protocol and implementation were
+committed before execution of the fresh confirmation
+sample (commits `ef3352f` and `1215af8`, respectively).
+
+The original 192 discovery configurations were retained
+for calibration. A new sample of 1,000 configurations
+was generated independently using the fixed confirmation
+seed 2026112301. The model, parameter distributions,
+perturbation amplitude, integration procedure, time grid,
+and five diagnostic features were unchanged.
+
+The divergence-error warning threshold was 0.01, and
+the relative trajectory-error warning threshold was
+0.001. These thresholds were inherited from the earlier
+analyses and fixed before generating the new confirmation
+sample. Separate logistic calibration models were fitted
+on the original discovery configurations for each warning
+target.
+
+Define the target-specific discrimination contrasts
+
+$$
+\Delta_D =
+\operatorname{AUC}_{\mathrm{entropy},D}
+-
+\operatorname{AUC}_{\mathrm{Fisher\ norm},D},
+$$
+
+$$
+\Delta_S =
+\operatorname{AUC}_{\mathrm{entropy},S}
+-
+\operatorname{AUC}_{\mathrm{Fisher\ norm},S},
+$$
+
+where $D$ denotes the divergence-error target and $S$
+denotes the trajectory-error target.
+
+The prespecified directional hypotheses were
+$\Delta_D>0$ and $\Delta_S<0$. Support for both
+hypotheses required their respective paired 95%
+bootstrap percentile intervals to exclude zero
+in the hypothesized directions.
+
+We additionally estimated the reversal contrast
+
+$$
+R_{\mathrm{AUC}}=\Delta_D-\Delta_S.
+$$
+
+The bootstrap used 5,000 replicates with seed
+2026112302. Each replicate resampled confirmation
+configurations with replacement, retaining all
+diagnostic predictions and both warning targets
+for each sampled configuration. Calibration models
+were held fixed.
+
+ROC AUC measures discrimination, whereas the Brier
+score evaluates probabilistic prediction quality
+under a proper scoring rule [@gneiting2007].
+Pairing is important because diagnostic AUCs computed
+on common cases are dependent [@delong1988].
+
+All 1,000 configurations were successfully evaluated
+without replacement or reported numerical failure.
+The divergence target contained 608 positive and
+392 negative cases; the trajectory target contained
+581 positive and 419 negative cases.
+
+```{python}
+#| label: tbl-prospective-metrics
+#| tbl-cap: "Prospective confirmation performance on 1,000 fresh synthetic configurations."
+#| echo: false
+
+import pandas as pd
+from IPython.display import Markdown, display
+
+prospective_metrics = pd.read_csv(
+    "code/compartment/target_confirmation_metrics.csv"
+)
+
+diagnostic_names = {
+    "entropy_exact": "Entropy correction",
+    "goal_linear": "Goal-linear correction",
+    "fisher_norm": "Fisher norm",
+    "fisher_alignment": "Fisher alignment",
+    "state_norm": "State norm",
+}
+
+assert len(prospective_metrics) == 10
+assert set(prospective_metrics["target"]) == {
+    "divergence", "trajectory"
+}
+assert set(prospective_metrics["method"]) == set(
+    diagnostic_names
+)
+
+pm = prospective_metrics.copy()
+pm["method"] = pm["method"].map(diagnostic_names)
+pm["target"] = pm["target"].str.capitalize()
+
+pm = pm.rename(columns={
+    "target": "Warning target",
+    "method": "Diagnostic",
+    "auc": "ROC AUC",
+    "brier": "Brier score",
+})
+
+display(Markdown(pm.to_markdown(
+    index=False, floatfmt=".4f"
+)))
+```
+
+The entropy correction achieved ROC AUC 0.9996
+for divergence-error warnings, compared with
+0.7499 for Fisher norm. For trajectory-error
+warnings, the ordering reversed: Fisher norm
+achieved AUC 0.9666, compared with 0.8105 for
+entropy correction.
+
+The goal-linear and Fisher-alignment diagnostics
+closely followed the entropy correction, whereas
+the state norm closely followed Fisher norm.
+The reversal therefore concerns the distinction
+between goal-sensitive and magnitude-based
+features rather than a unique advantage of
+the exact entropy correction.
+
+```{python}
+#| label: tbl-prospective-contrasts
+#| tbl-cap: "Paired bootstrap contrasts in the prospective target-reversal experiment. Differences are entropy minus Fisher norm, except for the reversal contrast."
+#| echo: false
+
+prospective_summary = pd.read_csv(
+    "code/compartment/target_confirmation_summary.csv"
+)
+
+contrast_names = {
+    "auc_delta_divergence": "Divergence AUC difference",
+    "auc_delta_trajectory": "Trajectory AUC difference",
+    "auc_reversal_contrast": "AUC reversal contrast",
+    "brier_delta_divergence": "Divergence Brier difference",
+    "brier_delta_trajectory": "Trajectory Brier difference",
+}
+
+assert len(prospective_summary) == 5
+assert set(prospective_summary["comparison"]) == set(
+    contrast_names
+)
+assert prospective_summary["valid_replicates"].eq(5000).all()
+assert prospective_summary["undefined_replicates"].eq(0).all()
+
+ps = prospective_summary.set_index("comparison")
+
+assert ps.loc["auc_delta_divergence", "ci_low"] > 0
+assert ps.loc["auc_delta_trajectory", "ci_high"] < 0
+
+pt = prospective_summary[
+    ["comparison", "estimate", "ci_low", "ci_high"]
+].copy()
+
+pt["comparison"] = pt["comparison"].map(contrast_names)
+
+pt = pt.rename(columns={
+    "comparison": "Comparison",
+    "estimate": "Estimate",
+    "ci_low": "95% CI lower",
+    "ci_high": "95% CI upper",
+})
+
+display(Markdown(pt.to_markdown(
+    index=False, floatfmt=".4f"
+)))
+```
+
+Both prespecified directional hypotheses were
+supported. The paired reversal contrast was
+0.4057, with a 95% percentile interval of
+[0.3543, 0.4590]. Brier score differences also
+favored the entropy correction for divergence
+warnings and Fisher norm for trajectory warnings.
+
+The fresh confirmation sample supports the stability
+of the exploratory ranking reversal within the
+specified synthetic generating distribution.
+It does not establish universal diagnostic
+superiority or external validation in unrelated
+dynamical systems.
+
+The intervals are conditional on the original
+discovery sample and fixed calibration models.
+Both warning targets share underlying trajectories,
+and their thresholds were selected in earlier
+analyses. The prospective design prevents
+adaptation to the fresh confirmation sample but
+does not make the original threshold selection
+independent of the exploratory evidence.
+
 
 # Interpretation and external-validity limits
 
