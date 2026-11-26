@@ -108,6 +108,245 @@ All ecological predictors share the same reference solution, variation equations
 
 The warning threshold and perturbation were selected during exploration and held fixed for posterior-draw confirmation; they were not preregistered for the entire study. Confirmation draws are distinct from discovery draws but originate from the same posterior fitted to the ecological observations. Consequently, the warning experiment measures within-model discrimination rather than independent biological forecasting performance.
 
+## Local Fisher geometry and diagnostic ranking
+
+The exact Bregman decomposition provides a geometric
+interpretation of the matched diagnostics. At a fixed
+sampled time, suppress the time argument and write
+$q=p_1-X$ and $h=p_2-p_1$. Define the local positive
+definite metric
+
+$$
+G=\operatorname{diag}
+\left(\frac{1}{\omega_i p_{1,i}}\right),
+$$
+
+with inner product $\langle v,w\rangle_F=v^\top Gw$
+and norm $\|v\|_F^2=v^\top Gv$. Let
+
+$$
+Q=\|q\|_F^2,\qquad
+H=\|h\|_F^2,\qquad
+L=\langle q,h\rangle_F.
+$$
+
+Assume positive states and weights, and suppose that
+
+$$
+a=\max_i\frac{|q_i|}{p_{1,i}}<1,\qquad
+b=\max_i\frac{|h_i|}{p_{1,i}}<1.
+$$
+
+These conditions are sufficient for the following local
+remainder bounds; they are not assumed to hold uniformly
+throughout the finite-perturbation benchmarks.
+
+Since $X_i=p_{1,i}-q_i$, the goal-linear term can be
+expanded using $-\log(1-z)$, giving
+
+$$
+S=L+R_S,\qquad
+|R_S|\leq B_S=
+\frac{1}{2(1-a)^2}
+\sum_i\frac{|h_i|q_i^2}{\omega_i p_{1,i}^2}.
+$$
+
+The curvature term follows from the Taylor expansion of
+$(1+z)\log(1+z)-z$:
+
+$$
+C=\frac12H+R_C,\qquad
+|R_C|\leq B_C=
+\frac{1}{6(1-b)^2}
+\sum_i\frac{|h_i|^3}{\omega_i p_{1,i}^2}.
+$$
+
+Likewise, expansion of $-\log(1-z)-z$ yields
+
+$$
+d_1=\frac12Q+R_D,\qquad
+|R_D|\leq B_D=
+\frac{1}{3(1-a)^3}
+\sum_i\frac{|q_i|^3}{\omega_i p_{1,i}^2}.
+$$
+
+These bounds follow from the second derivative of
+$-\log(1-z)$ and the third derivatives of the two
+divergence-generating scalar functions on the indicated
+relative-displacement intervals.
+
+For $Q>0$, and when the numerical denominator floor is
+inactive, the exact normalized entropy correction is
+
+$$
+E_{\mathrm{loc}}
+=\frac{|S+C|}{d_1}
+=\frac{|2L+H+2R_S+2R_C|}{Q+2R_D}.
+$$
+
+Define its quadratic approximation by
+
+$$
+E_{\mathrm{quad}}=\frac{|2L+H|}{Q}.
+$$
+
+If $2B_D<Q$, the reverse triangle inequality and the
+denominator bound imply
+
+$$
+|E_{\mathrm{loc}}-E_{\mathrm{quad}}|
+\leq
+\frac{2(B_S+B_C)+2E_{\mathrm{quad}}B_D}
+{Q-2B_D}.
+$$
+
+This sufficient bound makes explicit the role of the
+relative state displacement, correction size, and
+normalization. It need not be informative outside the
+local regime.
+
+For nonzero $q$ and $h$, introduce the relative Fisher
+correction magnitude and signed alignment
+
+$$
+r=\frac{\|h\|_F}{\|q\|_F},\qquad
+c=\frac{\langle q,h\rangle_F}
+{\|q\|_F\|h\|_F}.
+$$
+
+By Cauchy--Schwarz, $|c|\leq1$. The unregularized
+pointwise Fisher-norm and Fisher-alignment diagnostics
+are respectively $r$ and $A_F=r|c|$. The quadratic
+entropy diagnostic becomes
+
+$$
+E_{\mathrm{quad}}=|2rc+r^2|.
+$$
+
+The reverse triangle inequality then gives
+
+$$
+|E_{\mathrm{quad}}-2A_F|\leq r^2.
+$$
+
+Consequently, the quadratic entropy correction differs
+from twice the Fisher alignment by at most a
+second-order term in the relative correction magnitude.
+This is an absolute error bound, not a relative
+agreement guarantee when alignment is small.
+
+Combining the preceding inequalities yields
+
+$$
+|E_{\mathrm{loc}}-2A_F|
+\leq r^2+
+\frac{2(B_S+B_C)+2E_{\mathrm{quad}}B_D}
+{Q-2B_D},
+$$
+
+under the stated sufficient conditions. The case
+$h=0$ has zero correction and alignment and does not
+require an angle to be defined.
+
+The implemented diagnostics average their respective
+pointwise quantities over sampled positive times.
+When the local bounds apply and the denominator floors
+are inactive throughout that window, the absolute
+difference between the averaged entropy diagnostic
+and twice the averaged Fisher-alignment diagnostic is
+bounded by the average of the pointwise upper bounds.
+No interchange of temporal averaging with the
+nonlinear angle expression is required.
+
+### A counterexample to universal diagnostic ordering
+
+The correction magnitude alone cannot determine the
+entropy diagnostic. Consider two hypothetical
+configurations with $(r,c)=(0.20,0)$ and
+$(r,c)=(0.10,1)$. Their Fisher-norm diagnostics are
+$0.20$ and $0.10$, respectively, but their quadratic
+entropy diagnostics are $0.04$ and $0.21$.
+
+This disagreement is not restricted to the quadratic
+approximation. Consider the positive states and weights
+
+$$
+p_1=(1,1),\qquad X=(0.99,1),\qquad
+\omega=(1,1),
+$$
+
+with corrections
+
+$$
+h_A=(0,0.002),\qquad h_B=(0.001,0).
+$$
+
+The relative Fisher norm is larger for configuration A,
+whereas the exact normalized entropy correction is
+larger for configuration B. The orthogonal correction
+contributes only curvature, while the aligned
+correction contributes both the goal-linear term and
+curvature.
+
+This example establishes that the diagnostics need not
+induce the same ordering on positive state
+configurations. It is not a claim that these particular
+states and corrections arise from either benchmark
+dynamical system, nor does it establish a universal
+ordering of classifier ROC AUC.
+
+### Relation to trajectory approximation error
+
+For sufficiently smooth finite-time solution maps,
+the Taylor expansion implies
+
+$$
+x_\varepsilon-p_1=h+O(\varepsilon^3)
+$$
+
+as $\varepsilon\to0$, under the usual bounded-derivative
+conditions. Thus, the second-order correction estimates
+the leading state approximation residual, while its
+projection onto the divergence gradient contributes
+to the leading change in the divergence observable.
+
+Norm-based and goal-oriented indicators consequently
+emphasize different aspects of the same correction.
+A large residual can have a small projection onto the
+goal gradient, whereas a smaller aligned residual can
+produce a larger change in the observable.
+
+The Fisher norm and the Euclidean trajectory norm are
+not identical. For positive finite metric weights,
+
+$$
+\sqrt{\lambda_{\min}(G)}\,\|h\|_2
+\leq \|h\|_F
+\leq \sqrt{\lambda_{\max}(G)}\,\|h\|_2.
+$$
+
+Uniform comparisons over time require corresponding
+uniform bounds on the metric eigenvalues. Furthermore,
+the implemented Fisher diagnostic averages pointwise
+relative norms, whereas the trajectory-error target
+uses a relative norm over the complete sampled
+trajectory. These distinctions prevent a general
+identification of the two quantities.
+
+The local geometry therefore motivates, but does not
+prove, target-dependent diagnostic performance.
+Observed warning discrimination additionally depends
+on the dynamical ensemble, finite-perturbation
+remainders, temporal aggregation, denominator floors,
+warning thresholds, and calibration procedure.
+
+The accompanying mathematical regression tests check
+the exact decomposition, remainder inequalities,
+local convergence, and ranking counterexamples.
+They complement the analytical derivations rather
+than constitute proofs or additional benchmark
+confirmation.
+
 # Results
 
 ```{python}

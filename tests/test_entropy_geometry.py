@@ -188,3 +188,45 @@ def test_local_approximation_convergence():
         later < earlier
         for earlier, later in zip(errors, errors[1:])
     )
+
+
+@pytest.mark.parametrize("seed", [321, 654, 987])
+def test_normalized_approximation_bound(seed):
+    rng = np.random.default_rng(seed)
+
+    for _ in range(100):
+        p = rng.uniform(0.5, 10., size=5)
+        omega = rng.uniform(0.5, 5., size=5)
+
+        q = p * rng.uniform(-0.1, 0.1, size=5)
+        h = p * rng.uniform(-0.05, 0.05, size=5)
+
+        g = geometry(p, q, h, omega)
+
+        Q = g["Q"]
+        H = g["H"]
+        L = g["L"]
+
+        bs = g["bound_s"]
+        bc = g["bound_c"]
+        bd = g["bound_d"]
+
+        assert Q > 2 * bd
+
+        exact = abs(g["S"] + g["C"]) / g["D"]
+        quadratic = abs(2 * L + H) / Q
+
+        bound = (
+            2 * (bs + bc) + 2 * quadratic * bd
+        ) / (Q - 2 * bd)
+
+        alignment = abs(L) / Q
+        r_squared = H / Q
+
+        assert abs(
+            exact - quadratic
+        ) <= bound + 1e-12
+
+        assert abs(
+            exact - 2 * alignment
+        ) <= r_squared + bound + 1e-12
