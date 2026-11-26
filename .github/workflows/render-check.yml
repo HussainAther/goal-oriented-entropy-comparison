@@ -37,10 +37,7 @@ jobs:
           python code/compartment/run_state_sensitivity.py
           quarto render main.qmd --to computo-html
 
-          python -m unittest discover \
-            -s tests \
-            -p 'test_*.py' \
-            -v
+          python -m pytest tests/ -v
 
       - name: Upload rendered article
         if: success()
