@@ -192,6 +192,22 @@ The correspondence between Bregman divergences
 and exponential families provides additional
 context [@banerjee2005].
 
+::: {#lem-poisson-geometry}
+
+For fixed positive weights $\omega_i$ and positive
+states $z,x$, the auxiliary product-Poisson family
+with component means $x_i/\omega_i$ satisfies
+
+$$
+D_{\mathrm{KL}}(P_z\Vert P_x)=D_\omega(z\mid x),
+\qquad
+\mathcal I(x)=\nabla^2\Phi_\omega(x).
+$$
+
+:::
+
+::: {.proof}
+
 For fixed positive weights $\omega_i$, consider
 the convex potential
 
@@ -282,6 +298,8 @@ approximation $p_1$ gives exactly the local
 metric used in the Fisher-norm and
 Fisher-alignment diagnostics.
 
+:::
+
 The weights are held fixed within each
 configuration. This construction is an
 auxiliary statistical representation of the
@@ -332,6 +350,40 @@ These conditions are sufficient for the following local
 remainder bounds; they are not assumed to hold uniformly
 throughout the finite-perturbation benchmarks.
 
+::: {#prp-local-remainders}
+
+Under the positivity assumptions and the
+relative-displacement conditions $a<1$ and $b<1$,
+the expansions
+
+$$
+S=L+R_S,\qquad
+C=\frac12H+R_C,\qquad
+d_1=\frac12Q+R_D
+$$
+
+have absolute remainder bounds
+$|R_S|\leq B_S$, $|R_C|\leq B_C$,
+and $|R_D|\leq B_D$, where
+
+$$
+\begin{aligned}
+B_S &=
+\frac{1}{2(1-a)^2}
+\sum_i\frac{|h_i|q_i^2}{\omega_i p_{1,i}^2},\\
+B_C &=
+\frac{1}{6(1-b)^2}
+\sum_i\frac{|h_i|^3}{\omega_i p_{1,i}^2},\\
+B_D &=
+\frac{1}{3(1-a)^3}
+\sum_i\frac{|q_i|^3}{\omega_i p_{1,i}^2}.
+\end{aligned}
+$$
+
+:::
+
+::: {.proof}
+
 Since $X_i=p_{1,i}-q_i$, the goal-linear term can be
 expanded using $-\log(1-z)$, giving
 
@@ -365,6 +417,8 @@ These bounds follow from the second derivative of
 $-\log(1-z)$ and the third derivatives of the two
 divergence-generating scalar functions on the indicated
 relative-displacement intervals.
+
+:::
 
 For $Q>0$, and when the numerical denominator floor is
 inactive, the exact normalized entropy correction is
@@ -426,6 +480,27 @@ second-order term in the relative correction magnitude.
 This is an absolute error bound, not a relative
 agreement guarantee when alignment is small.
 
+::: {#prp-entropy-alignment}
+
+Suppose the preceding remainder conditions hold,
+$Q>0$, $2B_D<Q$, and the entropy and
+Fisher-alignment denominator floors are inactive.
+Then
+
+$$
+|E_{\mathrm{loc}}-2A_F|
+\leq r^2+
+\frac{2(B_S+B_C)+2E_{\mathrm{quad}}B_D}
+{Q-2B_D}.
+$$
+
+For $h=0$, define $A_F=0$ without introducing
+an alignment angle.
+
+:::
+
+::: {.proof}
+
 Combining the preceding inequalities yields
 
 $$
@@ -439,6 +514,31 @@ under the stated sufficient conditions. The case
 $h=0$ has zero correction and alignment and does not
 require an angle to be defined.
 
+:::
+
+::: {#cor-temporal-agreement}
+
+Let $\mathcal T_+$ denote the sampled positive
+times, and let $U(t)$ denote the upper bound
+in the preceding proposition. If its conditions
+hold at every sampled positive time, then
+
+$$
+\left|
+I_{\mathrm{entropy}}-2I_{\mathrm{alignment}}
+\right|
+\leq
+\frac{1}{|\mathcal T_+|}
+\sum_{t\in\mathcal T_+}U(t).
+$$
+
+Here $I_{\mathrm{alignment}}$ denotes the
+implemented Fisher-alignment indicator.
+
+:::
+
+::: {.proof}
+
 The implemented diagnostics average their respective
 pointwise quantities over sampled positive times.
 When the local bounds apply and the denominator floors
@@ -449,7 +549,11 @@ bounded by the average of the pointwise upper bounds.
 No interchange of temporal averaging with the
 nonlinear angle expression is required.
 
+:::
+
 ### A counterexample to universal diagnostic ordering
+
+::: {#exm-ranking-reversal}
 
 The correction magnitude alone cannot determine the
 entropy diagnostic. Consider two hypothetical
@@ -472,6 +576,17 @@ $$
 h_A=(0,0.002),\qquad h_B=(0.001,0).
 $$
 
+Direct evaluation gives
+
+$$
+\begin{aligned}
+r_A &= 0.20, &
+E_{\mathrm{loc},A} &\approx 0.039707,\\
+r_B &= 0.10, &
+E_{\mathrm{loc},B} &\approx 0.209596.
+\end{aligned}
+$$
+
 The relative Fisher norm is larger for configuration A,
 whereas the exact normalized entropy correction is
 larger for configuration B. The orthogonal correction
@@ -485,6 +600,8 @@ configurations. It is not a claim that these particular
 states and corrections arise from either benchmark
 dynamical system, nor does it establish a universal
 ordering of classifier ROC AUC.
+
+:::
 
 ### Relation to trajectory approximation error
 
