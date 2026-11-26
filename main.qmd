@@ -1803,6 +1803,27 @@ Exact archive integrity and numerical reproducibility
 are distinct requirements: floating-point regeneration
 need not produce byte-identical CSV files.
 
+A subsequent clean-worktree reproduction at commit
+`39c19aa` regenerated the prospective synthetic
+confirmation and ecological bootstrap robustness
+analyses in the same local macOS arm64 environment.
+
+All eight regenerated output files matched their
+archived SHA-256 checksums, and the archived ecological
+prediction input remained unchanged.
+The complete regression suite passed in the isolated
+worktree.
+
+The two analyses regenerated 25,000 bootstrap
+replicates in total.
+The procedure, software versions and reproduced
+numerical results are documented in
+`protocols/clean_worktree_reproduction.md`.
+
+This establishes same-environment byte-identical
+regeneration for these analyses, rather than
+cross-platform or independent third-party replication.
+
 Computational reproducibility does not establish
 independent predictive validation.
 
