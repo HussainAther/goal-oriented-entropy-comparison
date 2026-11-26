@@ -1824,6 +1824,30 @@ This establishes same-environment byte-identical
 regeneration for these analyses, rather than
 cross-platform or independent third-party replication.
 
+A separate numerical consistency audit recomputed
+ROC AUC using the Mann--Whitney rank statistic,
+Brier scores by direct squared-error calculation,
+and ecological logarithmic loss directly from
+archived prediction probabilities.
+
+The audit verified all 17 metric records and
+53 bootstrap summary records within an absolute
+numerical tolerance of $10^{-12}$.
+It also verified prospective warning labels and
+all 5,000 replicate-level AUC reversal identities.
+
+The implementation and results are available in
+`audit_numerical_results.py` and
+`protocols/numerical_audit_results.md`.
+The complete regression suite contains 88 passing
+tests in the documented local environment.
+
+This audit establishes internal numerical
+consistency of the archived results, rather than
+independent reconstruction of every bootstrap
+sample or validation of the underlying physical
+models.
+
 Computational reproducibility does not establish
 independent predictive validation.
 
