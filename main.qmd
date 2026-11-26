@@ -47,7 +47,7 @@ Our objective is to understand diagnostic agreement and
 disagreement rather than establish universal superiority
 of a particular information-geometric construction.
 
-The study makes four principal contributions:
+The study makes five principal contributions:
 
 1. **Local diagnostic geometry.**
    Explicit remainder bounds relate normalized relative-entropy
@@ -66,7 +66,13 @@ The study makes four principal contributions:
    configurations under divergence-error and trajectory-error
    warning targets.
 
-4. **Executable computational evidence.**
+4. **Empirical assessment of local information geometry.**
+   A retrospective reconstruction of the 1,000 synthetic
+   confirmation configurations evaluates the applicability,
+   numerical tightness and descriptive relevance of the
+   analytical bounds across 40,000 sampled positive times.
+
+5. **Executable computational evidence.**
    Numerical implementations, regression tests, archived
    experimental records, documented protocols and isolated
    ecological regeneration support computational reproducibility.
@@ -1781,7 +1787,9 @@ geometry_error_table["Count"] = (
 )
 
 display(Markdown(
-    geometry_error_table.to_markdown(floatfmt=".6f")
+    geometry_error_table.to_markdown(
+        floatfmt=("", ".0f", ".6f", ".6f", ".6f")
+    )
 ))
 ```
 
@@ -2119,6 +2127,25 @@ and Taylor remainder terms are sufficiently small.
 The counterexamples demonstrate that Fisher correction
 magnitude alone cannot guarantee the same ordering.
 
+The retrospective empirical assessment connects these
+analytical statements to the synthetic benchmark.
+All 40,000 sampled positive-time points satisfied the
+sufficient conditions for the local agreement bounds,
+with no detected inequality violations within numerical
+tolerance.
+
+The configuration-level Spearman correlations between
+exact entropy and quadratic entropy, twice Fisher alignment,
+and relative Fisher norm were 0.9983, 0.9921 and 0.5523,
+respectively.
+
+These results support the relevance of directional
+information to entropy diagnostic agreement within
+the examined ensemble. The combined normalized bounds
+were substantially more conservative than the individual
+Taylor remainder bounds, limiting their usefulness as
+precise predictions of approximation discrepancies.
+
 These results complement established goal-oriented
 error estimation and information geometry
 [@becker2001; @cao2004; @nielsen2020].
@@ -2150,6 +2177,24 @@ This reversal is consistent with the distinction
 between directional goal information and correction
 magnitude. It is not a mathematical consequence
 of the local bounds alone.
+
+The retrospective geometry assessment provides additional
+descriptive context. Both relative correction magnitude
+and absolute directional alignment were higher in median
+among divergence-warning configurations. In contrast,
+trajectory-warning configurations exhibited higher median
+correction magnitude but lower median absolute alignment.
+
+These patterns are consistent with the different information
+emphasized by the two diagnostic constructions.
+However, they do not establish a causal explanation of
+the ranking reversal or quantify the independent contribution
+of magnitude and alignment to predictive performance.
+
+Because the geometry assessment reuses the prospective
+confirmation configurations, it is an interpretation of
+the existing experiment rather than another independent
+confirmation.
 
 The divergence warning target and entropy diagnostic
 share a divergence-based construction.
@@ -2224,8 +2269,20 @@ generation or model fitting.
 
 Finally, the local geometric bounds require sufficient
 positivity, displacement and denominator conditions.
-Their usefulness is not guaranteed throughout the
-finite-amplitude numerical benchmarks.
+Although these conditions were satisfied throughout the
+sampled synthetic confirmation ensemble, their applicability
+is not established between sampled times, for the ecological
+benchmark or for other finite-amplitude perturbation regimes.
+
+The empirical geometry assessment is retrospective.
+Its class-conditional summaries and correlations are
+descriptive, and sampled times within each configuration
+are dependent. No independence-based pointwise statistical
+inference is warranted.
+
+The observed conservatism of the combined bounds also
+distinguishes sufficient analytical control from accurate
+numerical prediction of diagnostic discrepancies.
 
 These limitations motivate future investigation of
 additional dynamical systems, perturbation regimes,
@@ -2253,6 +2310,15 @@ The prospectively specified synthetic experiment
 confirms that changing the approximation-error target
 can reverse the relative performance of entropy and
 Fisher norm within the examined generating ensemble.
+
+The retrospective geometry assessment establishes
+empirical applicability of the local sufficient conditions
+at all 40,000 sampled positive times in the synthetic
+confirmation ensemble. The observed agreement between
+entropy and Fisher alignment, together with the distinct
+class-conditional magnitude and alignment patterns,
+provides a descriptive geometric interpretation of the
+predictive results.
 
 Together, these findings support evaluating diagnostic
 features under matched approximation information,
@@ -2313,9 +2379,29 @@ To preserve the archived evidence, independent
 regeneration should be performed in a separate
 repository copy or temporary workspace.
 
-The manuscript reads the archived results of these
-two analyses rather than rerunning them during
-each render.
+The retrospective information geometry assessment
+can be regenerated using:
+
+```bash
+python code/compartment/run_geometry_validation.py
+```
+
+This analysis reconstructs the archived prospective
+confirmation configurations and writes pointwise,
+configuration-level and summary records.
+
+As with the other experimental regeneration commands,
+it should be executed in a separate repository copy
+or temporary workspace to preserve the archived evidence.
+
+The manuscript reads the archived results of the
+prospective confirmation, ecological bootstrap robustness
+and retrospective geometry analyses rather than rerunning
+them during each render.
+
+Three SHA-256 manifests cover 12 unique archived
+evidence files, including the three geometry assessment
+outputs and their shared prospective configuration input.
 
 Protocols, random seeds, case-level records,
 predictions and bootstrap results are retained
@@ -2327,6 +2413,7 @@ checked using:
 
 ```bash
 python verify_archive.py
+python audit_numerical_results.py
 python -m pytest tests/ -q
 ```
 
@@ -2334,6 +2421,7 @@ The executable manuscript is rendered using:
 
 ```bash
 quarto render main.qmd --to computo-html
+quarto render main.qmd --to computo-pdf
 ```
 
 The initial isolated reproduction checks were performed
@@ -2375,17 +2463,41 @@ numerical tolerance of $10^{-12}$.
 It also verified prospective warning labels and
 all 5,000 replicate-level AUC reversal identities.
 
-The implementation and results are available in
-`audit_numerical_results.py` and
-`protocols/numerical_audit_results.md`.
-The complete regression suite contains 88 passing
-tests in the documented local environment.
+A separate information geometry consistency audit
+independently verifies the 40,000 pointwise records,
+1,000 configuration records and all 268 geometry
+summary records without importing the original
+geometry assessment implementation.
 
-This audit establishes internal numerical
+It checks 240,000 pointwise and 1,000 temporal
+inequality comparisons using the numerical tolerance
+specified in the geometry assessment protocol.
+It also independently recomputes the 12 correlation
+coefficients and 20 warning-class medians.
+
+Regression tests confirm that the audit rejects
+specified numerical inconsistencies and duplicate
+records introduced into temporary evidence copies.
+
+The central numerical audit invokes both the original
+prediction-metric checks and the geometry consistency
+checks. Implementations and detailed verification
+reports are retained in the repository.
+The regression suite includes tests of mathematical
+identities, numerical diagnostics, experimental protocols,
+archive integrity and reproducibility procedures.
+
+These audits establish internal numerical
 consistency of the archived results, rather than
 independent reconstruction of every bootstrap
 sample or validation of the underlying physical
 models.
+
+The geometry audit additionally does not independently
+integrate the model ODE or reconstruct the elementary
+Taylor remainder bounds from component-level state
+vectors. Its verification of the analytical bounds
+is conditional on the archived geometric quantities.
 
 Computational reproducibility does not establish
 independent predictive validation.

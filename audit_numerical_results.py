@@ -450,6 +450,11 @@ def main():
     audit_prospective(discovery)
     audit_ecology()
 
+    from audit_geometry_results import audit_geometry
+
+    print("\nINDEPENDENT GEOMETRY CONSISTENCY AUDIT\n")
+    audit_geometry()
+
     print("\nALL NUMERICAL AUDIT CHECKS PASSED")
 
 

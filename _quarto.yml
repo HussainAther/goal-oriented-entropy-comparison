@@ -15,23 +15,28 @@ author:
         department: Online Master of Science in Analytics
 abstract: >-
   Goal-oriented error warnings and state-magnitude diagnostics can exhibit different
-  predictive performance despite relying on identical perturbation information. We
-  investigate when relative-entropy and Fisher-information-weighted warnings agree or
-  disagree in nonlinear dynamical systems. Using an exact Bregman decomposition, we
-  derive local approximation bounds relating normalized entropy corrections to Fisher
-  alignment and construct counterexamples to universal diagnostic ordering. In 144
-  confirmation configurations from a posterior-fitted ecological model, entropy and
-  Fisher norm achieve ROC AUCs of 0.9777 and 0.9769, respectively. Crossed-factor
-  bootstrap resampling more than doubles the uncertainty interval width for their AUC
-  difference relative to unstratified vessel-only resampling. In a prospectively
-  specified experiment involving 1,000 fresh synthetic compartment-model configurations,
+  predictive performance despite relying on identical perturbation information.
+  We investigate when relative-entropy and Fisher-information-weighted warnings
+  agree or disagree in nonlinear dynamical systems. Using an exact Bregman
+  decomposition, we derive local approximation bounds relating normalized entropy
+  corrections to Fisher alignment and construct counterexamples to universal
+  diagnostic ordering. In 144 confirmation configurations from a posterior-fitted
+  ecological model, entropy and Fisher norm achieve ROC AUCs of 0.9777 and 0.9769,
+  respectively, while crossed-factor bootstrap resampling more than doubles the
+  uncertainty interval width for their AUC difference relative to unstratified vessel resampling. In a prospectively specified
+  experiment involving 1,000 fresh synthetic compartment-model configurations,
   entropy outperforms Fisher norm for divergence-error warnings (AUC 0.9996 versus
-  0.7499), whereas Fisher norm outperforms entropy for trajectory-error warnings (0.9666
-  versus 0.8105). Both ranking differences are supported by paired bootstrap intervals.
-  These findings demonstrate target-dependent diagnostic performance within the examined
-  benchmarks. Executable benchmarks, archived evidence and numerical reproduction checks
-  support computational reproducibility. The analysis concerns within-model
-  approximation reliability rather than independently validated physical forecasting.
+  0.7499), whereas Fisher norm outperforms entropy for trajectory-error warnings
+  (0.9666 versus 0.8105). Both ranking differences are supported by paired bootstrap
+  intervals. A retrospective geometric assessment finds that all 40,000 sampled
+  positive-time points satisfy the sufficient conditions for the local agreement
+  bounds, with no detected inequality violations within numerical tolerance.
+  Configuration-level exact entropy and twice Fisher alignment exhibit a Spearman
+  correlation of 0.9921. These findings connect target-dependent diagnostic
+  performance and local information geometry within the examined benchmarks.
+  Executable analyses, archived evidence and numerical reproduction checks support
+  computational reproducibility. The study concerns within-model approximation
+  reliability rather than independently validated physical forecasting.
 keywords: [goal-oriented error estimation, relative entropy, reproducibility, ecological dynamics, benchmarking]
 bibliography: references.bib
 github-user: HussainAther
