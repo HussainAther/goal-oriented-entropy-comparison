@@ -525,6 +525,207 @@ plt.close()
 
 
 
+
+## Dependence-sensitive ecological uncertainty
+
+The ecological confirmation configurations have a
+crossed dependence structure. Within each treatment
+group, the same six posterior draws are evaluated
+across twelve vessel-specific fitted initial states.
+Configurations can therefore share either a vessel
+or a posterior draw.
+
+The original vessel-cluster bootstrap retains
+dependence among configurations from the same
+vessel but does not explicitly account for the
+shared posterior draws.
+
+To examine sensitivity to this dependence structure,
+we conducted a retrospective robustness analysis
+of the archived confirmation predictions. The
+protocol and implementation were committed before
+execution of this analysis (commits `30c8efa` and
+`66d49f1`, respectively).
+
+The analysis is motivated by resampling methods
+for crossed data structures, including the
+pigeonhole bootstrap and its generalizations
+[@owen2007; @owen2012]. We do not assume that
+their theoretical results directly guarantee
+nominal coverage for the nonlinear AUC statistic
+in this particular fitted-posterior design.
+
+Four resampling schemes were compared:
+
+1. Unstratified vessel resampling: sample 24 vessel
+   blocks with replacement, retaining all six
+   posterior-draw configurations per selected vessel.
+
+2. Stratified vessel resampling: sample twelve
+   vessels with replacement separately within
+   each ecological treatment group.
+
+3. Stratified draw resampling: sample six posterior
+   draws with replacement within each group,
+   retaining all twelve vessels per selected draw.
+
+4. Stratified crossed resampling: independently
+   sample twelve vessels and six posterior draws
+   with replacement within each group, retaining
+   their Cartesian product with multiplicities.
+
+Each scheme used 5,000 bootstrap replicates.
+All diagnostic predictions and labels were retained
+together for each sampled configuration.
+
+The analysis used the original archived predictions;
+no trajectories were regenerated and no calibration
+models were refitted. The principal comparison
+was the entropy correction minus Fisher norm,
+with ROC AUC as the primary metric and Brier
+score as the secondary metric.
+
+```{python}
+#| label: tbl-ecological-robustness
+#| tbl-cap: "Dependence-sensitive bootstrap intervals for entropy-minus-Fisher-norm differences in the ecological confirmation configurations."
+#| echo: false
+
+robustness = pd.read_csv(
+    project_root /
+    "code/comparator/bootstrap_robustness_summary.csv"
+)
+
+assert len(robustness) == 48
+assert robustness["valid_replicates"].eq(5000).all()
+assert robustness["undefined_replicates"].eq(0).all()
+
+scheme_names = {
+    "vessel_unstratified": "Unstratified vessel",
+    "vessel_stratified": "Stratified vessel",
+    "draw_stratified": "Stratified draw",
+    "crossed_stratified": "Stratified crossed",
+}
+
+principal = robustness.loc[
+    robustness["comparator"] == "fisher_norm"
+].copy()
+
+assert len(principal) == 8
+assert set(principal["scheme"]) == set(scheme_names)
+assert set(principal["metric"]) == {"auc", "brier"}
+assert (principal["ci_low"] < 0).all()
+assert (principal["ci_high"] > 0).all()
+
+rt = principal[
+    ["scheme", "metric", "estimate",
+     "ci_low", "ci_high", "ci_width"]
+].copy()
+
+rt["scheme"] = rt["scheme"].map(scheme_names)
+rt["metric"] = rt["metric"].map({
+    "auc": "ROC AUC",
+    "brier": "Brier",
+})
+
+rt = rt.rename(columns={
+    "scheme": "Resampling scheme",
+    "metric": "Metric",
+    "estimate": "Estimate",
+    "ci_low": "95% CI lower",
+    "ci_high": "95% CI upper",
+    "ci_width": "Interval width",
+})
+
+display(Markdown(rt.to_markdown(
+    index=False, floatfmt=".5f"
+)))
+```
+
+All principal comparison intervals included zero.
+The observed AUC difference was 0.000775,
+and the observed Brier score difference was
+-0.002034.
+
+Relative to unstratified vessel resampling,
+stratified crossed resampling increased the
+AUC interval width by approximately 2.12-fold
+and the Brier interval width by 2.04-fold.
+
+```{python}
+#| label: fig-ecological-robustness
+#| fig-cap: "Sensitivity of the ecological entropy-minus-Fisher-norm AUC interval to the resampling scheme. Points indicate the full-sample difference; horizontal lines indicate 95% bootstrap percentile intervals."
+#| fig-alt: "Four horizontal confidence intervals crossing zero, with the crossed-resampling interval substantially wider than the vessel-resampling intervals."
+#| fig-width: 7
+#| fig-height: 3.5
+#| echo: false
+
+ra = (
+    principal.loc[principal["metric"] == "auc"]
+    .set_index("scheme")
+    .loc[list(scheme_names)]
+)
+
+fig, ax = plt.subplots()
+y = np.arange(len(ra))
+
+ax.errorbar(
+    ra["estimate"],
+    y,
+    xerr=np.vstack([
+        ra["estimate"] - ra["ci_low"],
+        ra["ci_high"] - ra["estimate"],
+    ]),
+    fmt="o",
+    capsize=4,
+)
+
+ax.axvline(0, linestyle="--", linewidth=1)
+ax.set_yticks(y, labels=list(scheme_names.values()))
+ax.invert_yaxis()
+ax.set_xlabel("ROC AUC difference (entropy minus Fisher norm)")
+ax.spines[["top", "right"]].set_visible(False)
+
+fig.tight_layout()
+display(fig)
+plt.close(fig)
+```
+
+The additional comparisons also demonstrate
+sensitivity to the resampling assumptions.
+For entropy minus the goal-linear correction,
+the AUC interval excluded zero under the three
+simpler schemes but included zero under crossed
+resampling. The corresponding crossed-resampling
+Brier interval remained negative.
+
+Under crossed resampling, entropy retained
+favorable marginal AUC and Brier intervals
+relative to Fisher alignment and the component-scaled
+state norm. Comparisons against the two-feature
+goal-linear-plus-curvature classifier remained
+inconclusive.
+
+The complete set of 48 metric-comparator-scheme
+summaries is retained in the repository.
+These additional intervals are marginal and
+are not adjusted for multiple comparisons.
+
+The qualitative conclusion of similar observed
+entropy and Fisher-norm performance is robust
+to the examined resampling schemes. However,
+the wider crossed-resampling intervals emphasize
+that the 144 configurations should not be treated
+as independent biological observations.
+
+This analysis establishes neither diagnostic
+superiority nor formal equivalence. It remains
+conditional on the fitted posterior, archived
+predictions, and fixed calibration models.
+Only six posterior draws per ecological group
+are available, and nominal interval coverage
+is not guaranteed by this robustness analysis.
+
+
 ## Independent nonlinear compartment benchmark
 
 To examine whether the ecological findings extend beyond a single dynamical system, we introduce a second, structurally distinct synthetic benchmark: a positive-state two-compartment model with saturating nonlinear transfer,
