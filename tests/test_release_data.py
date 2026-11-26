@@ -24,6 +24,18 @@ class ReleaseDataChecks(unittest.TestCase):
         bib = (ROOT/"references.bib").read_text()
         used = set(re.findall(r"@([a-zA-Z][a-zA-Z0-9_-]+)", qmd))
         defined = set(re.findall(r"@(?:article|misc|book|inproceedings|techreport)\s*\{([^,]+)", bib))
-        self.assertTrue(used <= defined, used - defined)
+        # Quarto cross-references are distinct from
+        # bibliographic citations.
+        document_labels = set(re.findall(
+            r"(?m)^\s*#\|\s*label:\s*([a-zA-Z][a-zA-Z0-9_-]+)\s*$",
+            qmd,
+        ))
+
+        unresolved = used - defined - document_labels
+
+        self.assertFalse(
+            unresolved,
+            f"Unresolved citations or document references: {unresolved}",
+        )
 
 if __name__ == "__main__": unittest.main()

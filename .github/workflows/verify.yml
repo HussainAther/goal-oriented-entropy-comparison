@@ -2,10 +2,13 @@ name: Verify archived scientific assertions
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, "feat/**", "fix/**"]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -28,7 +31,22 @@ jobs:
         run: |
           python --version
           python -m pytest --version
+          conda list
+
+      - name: Verify archived evidence
+        shell: bash -el {0}
+        run: python verify_archive.py
+
+      - name: Independently audit numerical results
+        shell: bash -el {0}
+        run: python audit_numerical_results.py
 
       - name: Run scientific regression tests
         shell: bash -el {0}
         run: python -m pytest tests/ -v
+
+      - name: Verify evidence preservation
+        shell: bash -el {0}
+        run: |
+          python verify_archive.py
+          git diff --exit-code

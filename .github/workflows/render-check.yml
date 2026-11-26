@@ -2,10 +2,13 @@ name: Verify executable Computo article
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, "feat/**", "fix/**"]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   render:
@@ -25,19 +28,30 @@ jobs:
 
       - name: Install Quarto
         uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: "1.11.9"
 
-      - name: Verify executable article
+      - name: Verify computational environment
         shell: bash -el {0}
         run: |
           python --version
           python -m ipykernel --version
           quarto --version
 
-          python code/compartment/run_benchmark.py
-          python code/compartment/run_state_sensitivity.py
-          quarto render main.qmd --to computo-html
+      - name: Verify archived evidence before rendering
+        shell: bash -el {0}
+        run: python verify_archive.py
 
-          python -m pytest tests/ -v
+      - name: Render executable article
+        shell: bash -el {0}
+        run: quarto render main.qmd --to computo-html
+
+      - name: Verify evidence after rendering
+        shell: bash -el {0}
+        run: |
+          python verify_archive.py
+          python audit_numerical_results.py
+          git diff --exit-code
 
       - name: Upload rendered article
         if: success()
