@@ -31,6 +31,15 @@ class ReleaseDataChecks(unittest.TestCase):
             qmd,
         ))
 
+        # Mathematical statements use Quarto fenced divs,
+        # rather than executable-cell label declarations.
+        fenced_div_labels = set(re.findall(
+            r"(?m)^\s*:{3,}\s*\{#([a-zA-Z][a-zA-Z0-9_-]+)(?=[\s}])",
+            qmd,
+        ))
+
+        document_labels.update(fenced_div_labels)
+
         unresolved = used - defined - document_labels
 
         self.assertFalse(

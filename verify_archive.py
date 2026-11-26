@@ -7,6 +7,7 @@ import hashlib
 MANIFESTS = (
     "protocols/target_confirmation_SHA256SUMS.txt",
     "protocols/ecological_bootstrap_SHA256SUMS.txt",
+    "protocols/geometry_validation_SHA256SUMS.txt",
 )
 
 

@@ -55,7 +55,24 @@ def predictions(tmp_path):
 
 
 def test_repository_archives():
-    assert len(verify_archives(ROOT)) == 9
+    assert len(verify_archives(ROOT)) == 12
+
+
+def test_geometry_archives_registered():
+    verified = verify_archives(ROOT)
+
+    expected = {
+        "code/compartment/geometry_validation_cases.csv",
+        "code/compartment/geometry_validation_pointwise.csv",
+        "code/compartment/geometry_validation_summary.csv",
+    }
+
+    assert expected <= set(verified)
+
+
+def test_duplicate_manifest_entries_counted_once(archive):
+    root, _ = archive
+    assert len(verify_archives(root)) == 1
 
 
 def test_valid_archive(archive):

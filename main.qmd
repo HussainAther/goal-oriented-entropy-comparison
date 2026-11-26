@@ -678,7 +678,11 @@ project_root = Path.cwd().resolve()
 
 assert verification["all_checks_passed"]
 assert verification["isolated_regeneration"]
-assert verification["verified_archived_files"] == 9
+from verify_archive import verify_archives
+
+assert verification["verified_archived_files"] == len(
+    verify_archives(project_root)
+)
 
 auc_differences = bootstrap["auc_entropy_minus_fisher_norm"]
 
@@ -1671,6 +1675,424 @@ for ax in (ax1, ax2):
     ax.spines[["top", "right"]].set_visible(False)
 
 fig.tight_layout(pad=1.5, w_pad=2.5)
+display(fig)
+plt.close(fig)
+```
+
+
+
+## Empirical assessment of local information geometry
+
+To assess the empirical relevance of the local approximation
+bounds, we retrospectively reconstructed the 1,000 archived
+configurations from the prospective synthetic confirmation
+ensemble. Model parameters, initial conditions, perturbation
+amplitudes, integration settings and warning thresholds were
+unchanged. No new configurations were generated and no
+classifiers were refitted.
+
+The analysis protocol and implementation were committed before
+the new geometry statistics were computed. This assessment
+is nevertheless retrospective because the predictive results
+of the ensemble were already known.
+
+At each of the 40 positive sampled times per configuration,
+we evaluated the relative Fisher correction magnitude $r$,
+signed alignment cosine $c$, exact normalized entropy correction,
+quadratic entropy approximation and analytical remainder bounds.
+The reconstruction reproduced the archived diagnostic averages
+and approximation errors with a maximum absolute discrepancy
+of approximately $1.39\times10^{-17}$ in the local execution
+environment.
+
+### Applicability and approximation accuracy
+
+All 40,000 sampled points satisfied the sufficient conditions
+of @prp-entropy-alignment, including positivity, the relative
+displacement restrictions, inactive denominator floors and
+the normalized remainder condition $2B_D<Q$.
+
+Consequently, all 1,000 configurations also satisfied the
+conditions of @cor-temporal-agreement at every sampled positive
+time. No violations of the six pointwise inequalities or the
+temporal inequality were detected using the protocol's numerical
+comparison tolerance.
+
+@tbl-geometry-errors summarizes the observed absolute
+approximation discrepancies.
+
+```{python}
+#| label: tbl-geometry-errors
+#| tbl-cap: "Absolute approximation discrepancies across 40,000 sampled positive times and 1,000 configuration-level temporal averages."
+#| echo: false
+
+from pathlib import Path
+import pandas as pd
+from IPython.display import display, Markdown
+
+geometry_root = Path("code/compartment")
+
+geometry_summary = pd.read_csv(
+    geometry_root / "geometry_validation_summary.csv"
+)
+
+geometry_cases = pd.read_csv(
+    geometry_root / "geometry_validation_cases.csv"
+)
+
+assert len(geometry_summary) == 268
+assert len(geometry_cases) == 1000
+assert geometry_cases.all_times_applicable.all()
+
+geometry_error_labels = {
+    "error_quad": "Exact vs. quadratic entropy",
+    "error_alignment_quad": "Quadratic vs. twice alignment",
+    "error_alignment_exact": "Exact vs. twice alignment",
+    "temporal_error": "Temporal exact vs. twice alignment",
+}
+
+geometry_error_table = (
+    geometry_summary[
+        geometry_summary.metric.isin(geometry_error_labels)
+        & geometry_summary.scope.isin(
+            ["pointwise", "configuration"]
+        )
+    ]
+    .pivot(
+        index="metric",
+        columns="statistic",
+        values="value"
+    )
+    .loc[list(geometry_error_labels)]
+    [["count", "median", "p95", "max"]]
+    .rename(index=geometry_error_labels)
+    .rename(columns={
+        "count": "Count",
+        "median": "Median",
+        "p95": "95th percentile",
+        "max": "Maximum",
+    })
+)
+
+geometry_error_table.index.name = "Comparison"
+
+geometry_error_table["Count"] = (
+    geometry_error_table["Count"].astype(int)
+)
+
+display(Markdown(
+    geometry_error_table.to_markdown(floatfmt=".6f")
+))
+```
+
+The median pointwise discrepancy between exact and quadratic
+entropy corrections was approximately 0.000204, with a
+95th percentile of 0.002090. The corresponding discrepancy
+between exact entropy and twice Fisher alignment had a median
+of 0.000171 and a 95th percentile of 0.004576.
+
+Across configuration-level averages, exact and quadratic
+entropy corrections exhibited Pearson and Spearman correlations
+of 0.999289 and 0.998339, respectively. Exact entropy and twice
+Fisher alignment exhibited corresponding correlations of
+0.995392 and 0.992063. By contrast, the correlations between
+exact entropy and relative Fisher norm were 0.602417 and
+0.552306.
+
+These descriptive results establish close agreement within
+the examined ensemble, without implying exact equivalence
+or universal agreement at other perturbation amplitudes.
+
+### Conservatism of the analytical bounds
+
+The median observed-error-to-bound ratios for the goal-linear,
+curvature and divergence remainders were 0.7773, 0.6308 and
+0.6966, respectively.
+
+The combined normalized bounds were more conservative:
+the median ratios for the exact--quadratic discrepancy,
+exact--alignment discrepancy and temporal agreement were
+0.0677, 0.0581 and 0.0461, respectively.
+
+The quadratic--alignment inequality was numerically saturated
+to the displayed precision throughout the sampled ensemble.
+
+The maximum curvature remainder ratio was approximately
+1.000142. This small excess was within the specified
+absolute-plus-relative numerical tolerance. Thus, the absence
+of detected violations is a tolerance-qualified numerical
+statement rather than a claim of exact floating-point
+inequalities.
+
+The combined bounds establish sufficient control of diagnostic
+approximation discrepancies, but their conservatism limits
+their usefulness as precise numerical predictions of the
+observed discrepancies.
+
+### Geometry of the warning classes
+
+The relative correction magnitude and directional alignment
+exhibited different descriptive patterns across the two
+warning targets.
+
+For divergence-error warnings, the median configuration-level
+average relative Fisher norm increased from 0.01068 in the
+negative class to 0.02134 in the positive class. The median
+configuration-level average absolute alignment cosine also
+increased, from 0.3723 to 0.6150.
+
+For trajectory-error warnings, the corresponding relative
+Fisher norm increased from 0.00964 to 0.02499, whereas the
+absolute alignment cosine decreased from 0.5656 to 0.4635.
+
+These patterns are consistent with the local expression
+
+$$
+E_{\mathrm{quad}}=|2rc+r^2|,
+$$
+
+in which the correction magnitude and its directional
+alignment jointly determine the quadratic entropy correction.
+
+The divergence-warning classes differ descriptively in both
+magnitude and alignment, whereas the trajectory-warning
+classes exhibit opposing changes in their median magnitude
+and alignment summaries.
+
+This provides a geometrically motivated interpretation of
+the target-dependent diagnostic ranking reversal. However,
+differences between class medians do not establish individual
+monotonic relationships, causal mechanisms or the contribution
+of each geometric quantity to ROC AUC.
+
+The analysis concerns the existing synthetic ensemble and
+sampled positive times only. Pointwise records within a
+configuration are dependent, and no independence-based
+pointwise significance tests or confidence intervals were
+calculated.
+
+
+
+@fig-empirical-geometry summarizes approximation agreement,
+bound tightness and the distributions of the geometric
+quantities across the two warning targets.
+
+```{python}
+#| label: fig-empirical-geometry
+#| fig-cap: "Retrospective empirical information geometry in the 1,000-case synthetic confirmation ensemble. (A) Configuration-level exact and quadratic entropy corrections. (B) Median and 5th--95th percentile observed-error-to-bound ratios. (C) Relative correction magnitude and (D) absolute alignment cosine by warning target and class. Boxplots show medians and interquartile ranges, with whiskers extending to 1.5 times the interquartile range. Outliers are not displayed in panels C and D. The two warning targets use the same configurations."
+#| fig-width: 10
+#| fig-height: 8
+#| echo: false
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+
+gc = geometry_cases
+gs = geometry_summary
+
+blue = "#0072B2"
+orange = "#D55E00"
+grey = "#A8B0B8"
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+ax_a, ax_b, ax_c, ax_d = axes.ravel()
+
+# Panel A: diagnostic approximation agreement.
+
+x = gc.mean_E_quad.to_numpy()
+y = gc.mean_E_loc.to_numpy()
+
+assert np.isfinite(x).all()
+assert np.isfinite(y).all()
+
+upper = 1.05 * max(x.max(), y.max())
+
+ax_a.scatter(
+    x, y,
+    s=10,
+    alpha=0.40,
+    color=blue,
+    edgecolors="none",
+    rasterized=True
+)
+
+ax_a.plot(
+    [0, upper], [0, upper],
+    linestyle="--",
+    color="0.35",
+    linewidth=1
+)
+
+ax_a.set(
+    xlim=(0, upper),
+    ylim=(0, upper),
+    xlabel="Mean quadratic entropy correction",
+    ylabel="Mean exact entropy correction",
+    title="A. Approximation agreement"
+)
+
+ax_a.set_aspect("equal", adjustable="box")
+
+rho = gc.mean_E_quad.corr(
+    gc.mean_E_loc, method="spearman"
+)
+
+ax_a.text(
+    0.04, 0.94,
+    f"Spearman correlation = {rho:.4f}",
+    transform=ax_a.transAxes,
+    va="top",
+    fontsize=9
+)
+
+# Panel B: observed-error-to-bound ratios.
+
+bound_specs = [
+    ("pointwise", "ratio_B_S", "Goal-linear remainder"),
+    ("pointwise", "ratio_B_C", "Curvature remainder"),
+    ("pointwise", "ratio_B_D", "Divergence remainder"),
+    ("pointwise", "ratio_B_quad", "Exact--quadratic"),
+    ("pointwise", "ratio_B_r2", "Quadratic--alignment"),
+    ("pointwise", "ratio_B_alignment", "Exact--alignment"),
+    ("configuration", "temporal_ratio", "Temporal agreement"),
+]
+
+for i, (scope, metric, label) in enumerate(bound_specs):
+    stats = (
+        gs[
+            gs.scope.eq(scope)
+            & gs.metric.eq(metric)
+        ]
+        .set_index("statistic")
+        .value
+    )
+
+    median = stats["median"]
+    low = stats["p05"]
+    high = stats["p95"]
+
+    color = blue if i < 3 else orange
+
+    ax_b.errorbar(
+        median, i,
+        xerr=[
+            [max(0., median - low)],
+            [max(0., high - median)]
+        ],
+        fmt="o",
+        color=color,
+        capsize=3,
+        markersize=5
+    )
+
+ax_b.axvline(
+    1.0, color="0.4",
+    linestyle="--", linewidth=1
+)
+
+ax_b.set_yticks(
+    range(len(bound_specs)),
+    [item[2] for item in bound_specs],
+    fontsize=8
+)
+
+ax_b.invert_yaxis()
+
+ax_b.set(
+    xlim=(-0.03, 1.07),
+    xlabel="Observed error / analytical bound",
+    title="B. Bound tightness"
+)
+
+# Panels C and D: warning-class distributions.
+
+def warning_boxplots(ax, column, ylabel, title):
+    positions = [1, 2, 4, 5]
+    distributions = []
+    colors = []
+
+    for target in ("divergence", "trajectory"):
+        for label in (0, 1):
+            values = gc.loc[
+                gc[f"{target}_label"].eq(label),
+                column
+            ].to_numpy()
+
+            assert len(values) > 0
+            assert np.isfinite(values).all()
+
+            distributions.append(values)
+            colors.append(grey if label == 0 else blue)
+
+    boxes = ax.boxplot(
+        distributions,
+        positions=positions,
+        widths=0.72,
+        patch_artist=True,
+        showfliers=False,
+        medianprops={
+            "color": "black",
+            "linewidth": 1.4
+        }
+    )
+
+    for patch, color in zip(boxes["boxes"], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.75)
+
+    ax.set_xticks(
+        [1.5, 4.5],
+        ["Divergence", "Trajectory"]
+    )
+
+    ax.set(
+        ylabel=ylabel,
+        title=title
+    )
+
+    ax.grid(
+        axis="y",
+        alpha=0.15
+    )
+
+warning_boxplots(
+    ax_c,
+    "mean_r",
+    "Mean relative Fisher norm",
+    "C. Correction magnitude"
+)
+
+warning_boxplots(
+    ax_d,
+    "mean_abs_c",
+    "Mean absolute alignment cosine",
+    "D. Directional alignment"
+)
+
+ax_d.set_ylim(0, 1.05)
+
+fig.legend(
+    handles=[
+        Patch(facecolor=grey, label="No warning"),
+        Patch(facecolor=blue, label="Warning"),
+    ],
+    loc="lower center",
+    ncol=2,
+    frameon=False
+)
+
+for ax in axes.ravel():
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+fig.tight_layout(
+    rect=[0, 0.045, 1, 1],
+    pad=1.6,
+    w_pad=2.2,
+    h_pad=2.0
+)
+
 display(fig)
 plt.close(fig)
 ```
