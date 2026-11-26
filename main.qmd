@@ -1369,6 +1369,196 @@ does not make the original threshold selection
 independent of the exploratory evidence.
 
 
+
+@fig-prospective-reversal summarizes the prospective
+ranking reversal and its paired-bootstrap uncertainty.
+The connecting lines link performance under two
+categorical warning targets; they do not represent
+a continuous change in the warning threshold.
+
+```{python}
+#| label: fig-prospective-reversal
+#| fig-cap: "Prospective confirmation of target-dependent diagnostic ranking reversal in 1,000 fresh synthetic configurations. Panel A shows observed ROC AUCs. Panel B shows entropy-minus-Fisher-norm AUC differences and their reversal contrast, with paired 95% percentile bootstrap intervals conditional on fixed discovery-stage calibrators."
+#| fig-alt: "Two-panel figure showing crossing entropy and Fisher-norm AUC rankings and bootstrap intervals supporting opposite directional differences."
+#| fig-width: 10
+#| fig-height: 4.8
+#| echo: false
+
+from matplotlib.ticker import MultipleLocator
+
+prospective_dir = project_root / "code/compartment"
+
+figure_metrics = pd.read_csv(
+    prospective_dir / "target_confirmation_metrics.csv"
+)
+
+figure_summary = pd.read_csv(
+    prospective_dir / "target_confirmation_summary.csv"
+).set_index("comparison")
+
+assert len(figure_metrics) == 10
+assert len(figure_summary) == 5
+
+targets = ["divergence", "trajectory"]
+
+auc_matrix = figure_metrics.pivot(
+    index="target",
+    columns="method",
+    values="auc",
+).loc[targets]
+
+assert (
+    auc_matrix.loc["divergence", "entropy_exact"]
+    > auc_matrix.loc["divergence", "fisher_norm"]
+)
+
+assert (
+    auc_matrix.loc["trajectory", "entropy_exact"]
+    < auc_matrix.loc["trajectory", "fisher_norm"]
+)
+
+fig, (ax1, ax2) = plt.subplots(
+    1, 2,
+    figsize=(10, 4.8),
+    gridspec_kw={"width_ratios": [1, 1.15]},
+)
+
+styles = {
+    "entropy_exact": {
+        "label": "Entropy correction",
+        "color": "#0072B2",
+        "marker": "o",
+        "linestyle": "-",
+    },
+    "fisher_norm": {
+        "label": "Fisher norm",
+        "color": "#D55E00",
+        "marker": "s",
+        "linestyle": "--",
+    },
+}
+
+# Panel A: observed ranking reversal.
+
+for method, style in styles.items():
+    values = auc_matrix[method].to_numpy()
+
+    ax1.plot(
+        [0, 1], values,
+        linewidth=2,
+        markersize=7,
+        **style,
+    )
+
+    for i, value in enumerate(values):
+        offset = 10 if value > 0.9 else -17
+
+        ax1.annotate(
+            f"{value:.4f}",
+            (i, value),
+            xytext=(0, offset),
+            textcoords="offset points",
+            ha="center",
+            fontsize=9,
+            color=style["color"],
+        )
+
+ax1.set_xticks(
+    [0, 1],
+    labels=["Divergence\nerror", "Trajectory\nerror"],
+)
+
+ax1.set_xlim(-0.25, 1.25)
+ax1.set_ylim(0.70, 1.045)
+ax1.yaxis.set_major_locator(MultipleLocator(0.05))
+ax1.set_ylabel("ROC AUC")
+ax1.set_xlabel("Warning target")
+ax1.set_title("A. Observed diagnostic performance", loc="left")
+ax1.grid(axis="y", alpha=0.22)
+ax1.set_axisbelow(True)
+ax1.legend(loc="center", frameon=False, fontsize=9)
+
+# Panel B: paired bootstrap contrasts.
+
+contrast_keys = [
+    "auc_delta_divergence",
+    "auc_delta_trajectory",
+    "auc_reversal_contrast",
+]
+
+contrast_labels = [
+    "Divergence error",
+    "Trajectory error",
+    "Reversal contrast",
+]
+
+contrast_colors = [
+    "#0072B2",
+    "#D55E00",
+    "#444444",
+]
+
+contrast_data = figure_summary.loc[contrast_keys]
+
+assert (contrast_data["valid_replicates"] == 5000).all()
+assert (contrast_data["undefined_replicates"] == 0).all()
+
+for i, (key, row) in enumerate(contrast_data.iterrows()):
+    estimate = row["estimate"]
+    lower = row["ci_low"]
+    upper = row["ci_high"]
+
+    ax2.errorbar(
+        estimate,
+        i,
+        xerr=[
+            [estimate - lower],
+            [upper - estimate],
+        ],
+        fmt="o",
+        color=contrast_colors[i],
+        markersize=6,
+        capsize=4,
+        linewidth=1.8,
+    )
+
+    ax2.annotate(
+        f"{estimate:+.4f}",
+        (estimate, i),
+        xytext=(0, 11),
+        textcoords="offset points",
+        ha="center",
+        fontsize=9,
+    )
+
+ax2.axvline(
+    0,
+    color="#777777",
+    linestyle="--",
+    linewidth=1,
+)
+
+ax2.set_yticks(
+    np.arange(len(contrast_labels)),
+    labels=contrast_labels,
+)
+
+ax2.set_ylim(2.5, -0.5)
+ax2.set_xlim(-0.25, 0.53)
+ax2.set_xlabel("AUC contrast")
+ax2.set_title("B. Paired bootstrap contrasts", loc="left")
+ax2.grid(axis="x", alpha=0.22)
+ax2.set_axisbelow(True)
+
+for ax in (ax1, ax2):
+    ax.spines[["top", "right"]].set_visible(False)
+
+fig.tight_layout(pad=1.5, w_pad=2.5)
+display(fig)
+plt.close(fig)
+```
+
+
 # Discussion
 
 ## Diagnostic geometry and matched information
