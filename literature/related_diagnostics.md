@@ -39,7 +39,7 @@ approximation errors.
 
 We do not derive path-space uncertainty bounds.
 
-## Predictive error models for dynamical systems
+## Parish and Carlberg (2020)
 
 Time-Series Machine-Learning Error Models for
 Approximate Solutions to Parameterized
@@ -64,9 +64,22 @@ initial-condition perturbation information.
 Our central experiment examines diagnostic rankings
 under two distinct binary warning targets.
 
-Full bibliographic verification remains pending.
+Bibliographic metadata verified against the
+publisher record.
 
-## Information-theoretic response analysis
+DOI: 10.1016/j.cma.2020.112990
+Bibliography key: parish2020.
+
+The paper explicitly considers normed state
+errors and quantity-of-interest errors as
+predictive regression targets.
+
+Consequently, comparing different error targets
+is not itself a sufficient novelty claim.
+Our contribution is the specific diagnostic
+geometry and controlled ranking-reversal study.
+
+## Majda and Qi (2019)
 
 Linear and Nonlinear Statistical Response
 Theories with Prototype Applications to
@@ -89,7 +102,15 @@ probability distributions and imperfect models.
 Our diagnostics operate on deterministic positive
 state trajectories and Taylor corrections.
 
-Full bibliographic verification remains pending.
+Bibliographic metadata verified against the
+publisher record and PubMed.
+
+DOI: 10.1063/1.5118690
+Bibliography key: majda2019.
+
+The publication provides broader context for
+linear and nonlinear statistical response.
+Detailed mathematical comparison remains limited.
 
 ## Originality assessment
 
