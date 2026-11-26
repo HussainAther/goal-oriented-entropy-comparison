@@ -1,9 +1,82 @@
 
 # Introduction
 
-Finite-time reliability of a dynamical approximation and prediction of a measured ecological outcome are different questions. A first- or second-order expansion may approximate a nonlinear model internally without the underlying model forecasting experiments excluded from its fitting. A second ambiguity concerns the choice of diagnostic: a goal-specific indicator can easily outperform an unrelated state norm even when no unique goal-specific information is present. Goal-oriented a posteriori estimation and adjoint methods already address errors in chosen observables [@becker2001; @cao2004; @giles2002]. The relevant scientific question is therefore not whether entropy-aware diagnostics can outperform every possible state metric, but what remains when the comparator has equivalent model and geometric information.
+Finite-time approximation reliability is a central concern
+in the computational analysis of nonlinear dynamical systems.
+An approximation may reproduce a reference model accurately
+without establishing that the underlying model predicts
+independent physical observations. Moreover, accurate state
+trajectories need not imply accurate nonlinear observables,
+and small observable errors need not imply uniformly
+accurate state reconstruction.
 
-We study two reproducible nonlinear dynamical benchmarks: posterior-fitted ecological ordinary differential equations used by @wojcik2025 and an independently generated synthetic two-compartment system with saturating transfer. The paper's contribution is intentionally narrow: (a) reproduce the published posterior-predictive dynamics; (b) examine amplitude-dependent finite-time approximation errors; (c) compare multiple warning indicators under matched reference trajectories, Taylor information and calibration budgets; and (d) show the limit of transferring within-model reliability claims to actual held-out ecological data. We do not introduce a new Bregman identity, a novel adjoint method or a general validated certificate.
+Goal-oriented a posteriori error estimation and adjoint
+methods explicitly account for errors in selected quantities
+of interest [@becker2001; @cao2004; @giles2002; @endtmayer2020].
+Relative entropy provides a framework for numerical error
+analysis and goal-dependent model uncertainty
+[@giesselmann2015; @birrell2021].
+Predictive error models provide a complementary approach
+in which computable indicators estimate otherwise
+unavailable approximation errors [@parish2020].
+
+These developments motivate a specific question:
+when diagnostic methods have access to the same underlying
+approximation information, how does feature construction
+affect their ability to predict a specified approximation
+failure?
+
+Relative entropy and Fisher information are closely related
+through established divergence geometry
+[@bregman1967; @banerjee2005; @nielsen2020].
+Nevertheless, magnitude-based and goal-aligned diagnostics
+can extract different features from the same perturbation
+correction. Their predictive rankings need not agree,
+even when both use the same local metric.
+
+We investigate this distinction using first- and second-order
+initial-condition Taylor approximations in two nonlinear
+dynamical benchmarks: posterior-fitted ecological ordinary
+differential equations from @wojcik2025 and an independently
+generated synthetic two-compartment system with saturating
+transfer.
+
+The matched diagnostics use common reference trajectories,
+perturbation information and calibration examples.
+Our objective is to understand diagnostic agreement and
+disagreement rather than establish universal superiority
+of a particular information-geometric construction.
+
+The study makes four principal contributions:
+
+1. **Local diagnostic geometry.**
+   Explicit remainder bounds relate normalized relative-entropy
+   corrections to Fisher alignment, while counterexamples
+   demonstrate the absence of universal ordering by Fisher
+   correction magnitude.
+
+2. **Matched-information ecological comparison.**
+   Diagnostic performance is evaluated using posterior-fitted
+   ecological dynamics, with uncertainty intervals examined
+   under crossed vessel and posterior-draw resampling.
+
+3. **Prospective confirmation of target-dependent ranking reversal.**
+   Following an exploratory comparison, a prospectively
+   specified protocol evaluates 1,000 fresh synthetic
+   configurations under divergence-error and trajectory-error
+   warning targets.
+
+4. **Executable computational evidence.**
+   Numerical implementations, regression tests, archived
+   experimental records, documented protocols and isolated
+   ecological regeneration support computational reproducibility.
+
+The analysis concerns predictive warnings for finite-time,
+within-model Taylor approximation errors. It does not
+introduce a new general divergence identity, replace
+adjoint-based error estimation, establish certified trajectory
+error bounds or demonstrate independently validated
+ecological forecasting.
 
 # Ecological system and numerical protocol
 
@@ -1206,25 +1279,252 @@ does not make the original threshold selection
 independent of the exploratory evidence.
 
 
-# Interpretation and external-validity limits
+# Discussion
 
-The two benchmarks reveal a dependence on diagnostic construction and dynamical setting. In the ecological system, the apparent entropy advantage over a component-scaled state norm nearly disappears against a reference-informed Fisher norm. In the synthetic compartment system, entropy substantially outperforms Fisher norm, while Fisher alignment nearly matches entropy. Equal access to reference trajectories, Taylor information, and calibration examples therefore does not guarantee equivalent predictive performance across diagnostic features. The exploratory trajectory-error sensitivity analysis reverses the entropy-versus-Fisher-norm ranking, indicating that predictive performance depends on the warning target as well as feature construction. The original warning label and entropy predictor share a divergence-based construction, and the synthetic ensemble is not an independent observational validation. These results are consistent with goal-oriented estimation and Bregman information geometry, rather than establishing a new identity or theorem.
+## Diagnostic geometry and matched information
 
-An exploratory chemostat-holdout forecasting analysis using separately refitted simplified mechanistic parameters did not beat a day-2 persistence forecast on observed algal and rotifer biomass (mean absolute natural-log errors approximately 0.895 versus 0.746 for the 23 matched valid vessels under one latent-nitrogen strategy). This negative result is supplementary: the original Stan model was not refitted under the exact same holdout setup, nutrient concentrations were unobserved and one model run failed. It should not be read as a refutation of the published ecological model.
+The mathematical and computational results distinguish
+access to approximation information from the construction
+of a diagnostic feature.
 
-Independent validated numerical certification of a continuous latent-state uncertainty set remains outside the results reported here. Preliminary residual-coordinate bound experiments need separate software verification and do not alter the matched warning result. No claim of certified ecological forecasts or universal optimality is made.
+The exact Bregman decomposition and auxiliary Poisson
+representation establish a common geometric foundation
+for the entropy and Fisher-based diagnostics.
+However, sharing a metric does not imply sharing a
+diagnostic ordering.
+
+The local approximation bounds explain why Fisher
+alignment can approximate the normalized entropy
+correction when the relative correction magnitude
+and Taylor remainder terms are sufficiently small.
+The counterexamples demonstrate that Fisher correction
+magnitude alone cannot guarantee the same ordering.
+
+These results complement established goal-oriented
+error estimation and information geometry
+[@becker2001; @cao2004; @nielsen2020].
+The derived bounds concern approximation of the
+diagnostic itself, rather than certified bounds on
+the complete trajectory or observable error.
+
+## Target-dependent predictive performance
+
+The prospective synthetic experiment provides evidence
+that diagnostic performance depends on the warning
+target within the specified generating ensemble.
+
+For divergence-error warnings, the entropy-minus-Fisher-norm
+AUC difference is 0.249664, with a paired bootstrap
+interval of [0.218876, 0.281867].
+For trajectory-error warnings, the corresponding difference
+is -0.156068, with an interval of [-0.183496, -0.129397].
+
+The reversal contrast is 0.405732, with a paired
+bootstrap interval of [0.354269, 0.459020].
+
+Both prespecified directional comparisons are supported.
+The Brier-score comparisons also favor entropy for
+divergence-error warnings and Fisher norm for
+trajectory-error warnings.
+
+This reversal is consistent with the distinction
+between directional goal information and correction
+magnitude. It is not a mathematical consequence
+of the local bounds alone.
+
+The divergence warning target and entropy diagnostic
+share a divergence-based construction.
+This structural correspondence is relevant to the
+interpretation of their predictive performance.
+It does not establish an intrinsic advantage of
+entropy for unrelated approximation targets.
+
+The prospective experiment confirms the exploratory
+finding using fresh configurations from the same
+synthetic generating distribution.
+It does not establish that the reversal holds across
+arbitrary dynamical systems, perturbation amplitudes
+or warning thresholds.
+
+## Dependence-sensitive ecological inference
+
+The ecological benchmark exhibits nearly identical
+observed discrimination for entropy and Fisher norm.
+
+The crossed-bootstrap analysis shows that accounting
+for both vessel and posterior-draw resampling can
+substantially widen the estimated uncertainty intervals.
+
+For the principal AUC comparison, the crossed interval
+is approximately 2.12 times as wide as the unstratified
+vessel-bootstrap interval.
+
+All four principal resampling intervals include zero.
+The results therefore do not establish superiority
+of either diagnostic or formal equivalence.
+
+The crossed analysis is motivated by established
+resampling methods for dependent data arrays
+[@owen2007; @owen2012].
+Its interpretation remains conditional on the fitted
+posterior, archived predictions and fixed calibration
+models.
+
+The ecological configurations are not independent
+biological observations. In particular, the small
+number of distinct confirmation draws per treatment
+group limits the interpretation of the resampling
+intervals.
+
+## Limitations and external validity
+
+Several limitations constrain the interpretation of
+the study.
+
+First, the benchmarks concern approximation errors
+within specified nonlinear models. The ecological
+analysis uses exported posterior draws from an already
+fitted model rather than independently refitting and
+validating that model on held-out experiments.
+
+Second, the synthetic experiment evaluates a particular
+compartment model, parameter distribution, perturbation
+regime and finite-time sampling grid. Fresh simulation
+cases support confirmation within this ensemble,
+not independent observational validation.
+
+Third, the warning thresholds originate from earlier
+exploration. They were fixed before the prospective
+confirmation experiment, but were not selected
+independently of all preceding results.
+
+Fourth, the bootstrap analyses are conditional on
+fixed fitted calibrators. They do not incorporate
+uncertainty arising from repeated discovery-sample
+generation or model fitting.
+
+Finally, the local geometric bounds require sufficient
+positivity, displacement and denominator conditions.
+Their usefulness is not guaranteed throughout the
+finite-amplitude numerical benchmarks.
+
+These limitations motivate future investigation of
+additional dynamical systems, perturbation regimes,
+warning targets and calibration procedures.
+Independent physical forecast validation and certified
+error estimation remain separate research objectives.
 
 # Conclusions
 
-Across two reproducible nonlinear dynamical benchmarks, agreement between relative-entropy and Fisher-based approximation warnings is not universal. In posterior-fitted ecological dynamics, entropy and Fisher norm have nearly identical held-out discrimination. In the synthetic nonlinear compartment system, entropy substantially outperforms Fisher norm, whereas Fisher alignment remains close to entropy. An exploratory alternative trajectory-error warning reverses the entropy-versus-Fisher-norm ranking, with Fisher norm achieving AUC 0.9513 versus 0.7971 for entropy. The results highlight the importance of warning-target definition, feature construction, and benchmark design, not a general ranking of information-geometric diagnostics.
+Relative-entropy and Fisher-based approximation
+warnings share an established information-geometric
+foundation, but their predictive rankings need not agree.
 
-These experiments evaluate finite-time, within-model approximation warnings. Ecological posterior draws are not independent biological experiments, and the synthetic ensemble does not represent observational uncertainty. The shared divergence-based construction of the warning target and entropy predictor limits general interpretation. Independent ecological forecast validation and certified error bounds remain outside the demonstrated results.
+Explicit local remainder bounds clarify the relationship
+between normalized entropy corrections and Fisher
+alignment, while counterexamples rule out universal
+ordering by Fisher correction magnitude.
+
+The ecological benchmark demonstrates nearly identical
+observed entropy and Fisher-norm discrimination,
+with substantially wider uncertainty intervals under
+crossed resampling.
+
+The prospectively specified synthetic experiment
+confirms that changing the approximation-error target
+can reverse the relative performance of entropy and
+Fisher norm within the examined generating ensemble.
+
+Together, these findings support evaluating diagnostic
+features under matched approximation information,
+explicitly defined warning targets and appropriate
+dependence-sensitive uncertainty analyses.
+
+The demonstrated results concern finite-time,
+within-model approximation reliability rather than
+universal diagnostic superiority, certified error
+bounds or independently validated physical forecasting.
 
 # Reproducibility and data availability
 
-The repository contains the ecological analysis source, exported posterior draw tables, numerical checks, figures, and an independently generated synthetic nonlinear compartment benchmark. The ecological stages documented in `README.md` and `run_stages.sh` regenerate perturbation and matched-comparator results from exported posterior draws. Original ecological posterior fitting and R-based export remain upstream prerequisites. The original data and posterior objects are available through Dryad under CC0 [@wojcikdata2025].
+The repository contains ecological analysis source code,
+exported posterior draw tables, synthetic benchmark
+implementations, numerical checks, experimental protocols,
+archived results and regression tests.
 
-The synthetic benchmark is regenerated with `python code/compartment/run_benchmark.py`. It produces case-level records, held-out metrics, predictions, and 1,500 bootstrap replicates using fixed seeds. Its 192 discovery and 144 confirmation configurations are distinct from the ecological posterior cases. Repeated execution reproduced all four CSV files byte-for-byte in the tested environment. Quarto executes Python code to summarize these results. The exploratory trajectory-error sensitivity analysis is regenerated with `python code/compartment/run_state_sensitivity.py`, producing separate case records, predictions, metrics, and 1,500 paired-bootstrap replicates. Its 0.1% warning threshold was selected after examining error distributions, including confirmation cases. The repository's render-check workflow regenerates both the original synthetic benchmark and the exploratory sensitivity-analysis outputs before rendering the expanded manuscript. Downstream computational reproducibility does not establish independent predictive validation.
+The original ecological data and posterior objects
+are available through Dryad under CC0 [@wojcikdata2025].
+Original posterior fitting and R-based export remain
+upstream prerequisites.
+
+The ecological computational stages are documented in
+`README.md` and `run_stages.sh`.
+The manuscript uses `reproduce_ecology.py` to execute
+these stages in an isolated temporary workspace.
+This prevents regeneration from overwriting archived
+experimental evidence.
+
+Regenerated ecological predictions are compared against
+the archived predictions using exact configuration
+identifiers and labels, together with numerical
+probability tolerances.
+The initial local verification compared 1,008 prediction
+rows, with a maximum absolute probability discrepancy
+of approximately $1.435\times10^{-9}$.
+
+The original synthetic benchmark and exploratory
+trajectory-error sensitivity analysis can be regenerated
+using:
+
+```bash
+python code/compartment/run_benchmark.py
+python code/compartment/run_state_sensitivity.py
+```
+
+The prospective synthetic confirmation and ecological
+crossed-bootstrap analyses are implemented in:
+
+```bash
+python code/compartment/run_target_confirmation.py
+python code/comparator/run_bootstrap_robustness.py
+```
+
+These two commands write experimental outputs.
+To preserve the archived evidence, independent
+regeneration should be performed in a separate
+repository copy or temporary workspace.
+
+The manuscript reads the archived results of these
+two analyses rather than rerunning them during
+each render.
+
+Protocols, random seeds, case-level records,
+predictions and bootstrap results are retained
+in the repository.
+SHA-256 manifests protect the archived evidence.
+
+Archive integrity and regression tests can be
+checked using:
+
+```bash
+python verify_archive.py
+python -m pytest tests/ -q
+```
+
+The executable manuscript is rendered using:
+
+```bash
+quarto render main.qmd --to computo-html
+```
+
+The initial isolated reproduction checks were performed
+in the local macOS environment.
+Exact archive integrity and numerical reproducibility
+are distinct requirements: floating-point regeneration
+need not produce byte-identical CSV files.
+
+Computational reproducibility does not establish
+independent predictive validation.
 
 # Responsible use of AI tools
 
