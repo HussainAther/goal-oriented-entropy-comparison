@@ -640,23 +640,46 @@ plt.close()
 
 ## Equal-information warning comparison
 
-For +20 µmol/L, an exploratory threshold design classifies a configuration as a first-order entropy-prediction failure when its time-averaged relative divergence error exceeds 1%. The choice of threshold and perturbation arose during earlier exploration; it was held fixed for the posterior-draw confirmation experiment but was **not preregistered for the entire study**. The discovery set contains 192 configurations and the confirmation set 144 *additional posterior-draw* configurations from the **same already fitted** posterior distribution. Logistic models apply logarithmic predictor transforms followed by standardization and regularized fitting, with the same discovery data and calibration settings per comparator. No confirmation labels are used in fitting the warning calibrators.
+At the selected nitrogen perturbation of +20 µmol/L,
+the discovery and confirmation sets contain 192 and 144
+configurations, respectively. The warning target and
+calibration procedure follow the definitions above.
+No confirmation labels are used to fit the classifiers.
 
-All methods use $X,u,w$ and the same temporal window. The entropy correction predictor measures the normalized magnitude of $D_\omega(p_2\mid X)-D_\omega(p_1\mid X)$. The Fisher-weighted state predictor takes a quadratic metric based on the positive reference/first-order prediction; a component-scaled norm provides the coarse state comparator. A goal-gradient feature uses the first term of the Bregman identity. Importantly, the *exact* goal-gradient plus curvature sum **equals** the entropy correction, and therefore must not be counted as a separate independent competitor. A two-feature regression on goal-gradient and curvature is a distinct *calibration architecture*, even though the underlying information is the same.
+The exact goal-linear-plus-curvature sum is algebraically
+identical to the entropy correction and is therefore
+not counted as an independent comparator. The two-feature
+classifier instead uses separate goal-linear and curvature
+predictors, representing a distinct calibration architecture.
 
-In 144 confirmation configurations, the entropy indicator yields ROC AUC 0.977709 and Brier score 0.068084. The Fisher-weighted indicator yields AUC 0.976934 and Brier 0.070118. The component-scaled state norm yields AUC 0.896492 and Brier 0.132038; the goal-gradient predictor yields AUC 0.971700 and Brier 0.076286. The entropy–Fisher AUC difference is only 0.000775; the exploratory chemostat-cluster resampling interval of the difference includes zero (`{python} f"{auc_ci_low:+.3f}"` to `{python} f"{auc_ci_high:+.3f}"`). AUC comparisons must not be taken as causal evidence that one error estimator contains intrinsically new information.
+Entropy correction and Fisher norm achieve ROC AUCs
+of 0.977709 and 0.976934, respectively.
+Their observed AUC difference is only 0.000775.
+The original vessel-cluster bootstrap interval includes zero
+(`{python} f"{auc_ci_low:+.3f}"` to
+`{python} f"{auc_ci_high:+.3f}"`).
+
+The two-feature classifier achieves the highest observed
+AUC, although its feature dimensionality differs from
+that of the single-feature classifiers.
+These results do not establish diagnostic superiority
+or formal equivalence.
 
 ```{python}
 #| label: tbl-matched-diagnostics
-#| tbl-cap: "Matched warning performance on posterior-draw confirmation configurations."
+#| tbl-cap: "Matched ecological warning performance for six distinct classifiers."
 #| echo: false
 
 method_labels = {
     "entropy_exact": "Entropy correction",
-    "fisher_norm": "Fisher-weighted",
-    "goal_linear": "Goal-gradient",
+    "goal_linear": "Goal linear",
+    "fisher_norm": "Fisher norm",
+    "fisher_alignment": "Fisher alignment",
     "state_norm": "Component-scaled state norm",
+    "goal_linear_plus_curvature": "Goal linear + curvature (two features)",
 }
+
+assert set(method_labels).issubset(matched_metrics.index)
 
 rows = [
     "| Diagnostic | ROC AUC | Brier score |",
@@ -674,47 +697,49 @@ display(Markdown("\n".join(rows)))
 
 ```{python}
 #| label: fig-matched-auc
-#| fig-cap: "Held-out posterior-draw warning discrimination. The entropy–Fisher near-tie limits claims of entropy-specific diagnostic superiority."
-#| fig-alt: "Horizontal bar plot of AUC for entropy correction, Fisher-weighted correction, goal gradient and a component-scaled state norm."
-#| fig-width: 7
-#| fig-height: 3.4
+#| fig-cap: "Observed ecological confirmation AUCs for six distinct classifiers. The two-feature classifier uses a different calibration architecture. Points represent observed discrimination, not uncertainty intervals."
+#| fig-alt: "Horizontal dot plot showing six ecological classifier AUCs, including the near-tie between entropy correction and Fisher norm."
+#| fig-width: 8
+#| fig-height: 4.2
 #| echo: false
-from IPython.display import display
 
-methods = [
-    "entropy_exact",
-    "fisher_norm",
-    "goal_linear",
-    "state_norm",
-]
+plot_metrics = matched_metrics.loc[
+    list(method_labels), "auc"
+].sort_values(ascending=False)
 
-labels = [
-    "Entropy correction",
-    "Fisher-weighted",
-    "Goal-gradient",
-    "Component-scaled state norm",
-]
-
-values = matched_metrics.loc[methods, "auc"].to_numpy(dtype=float)
+labels = [method_labels[m] for m in plot_metrics.index]
+values = plot_metrics.to_numpy(dtype=float)
 
 fig, ax = plt.subplots()
-y = np.arange(len(methods))
+y = np.arange(len(values))
 
-ax.barh(y, values)
+colors = [
+    "#0072B2" if m == "entropy_exact"
+    else "#D55E00" if m == "fisher_norm"
+    else "#777777"
+    for m in plot_metrics.index
+]
+
+ax.scatter(values, y, c=colors, s=45, zorder=3)
 ax.set_yticks(y, labels=labels)
-ax.set_xlim(0.82, 1.01)
+ax.set_xlim(0.88, 1.025)
 ax.invert_yaxis()
-ax.set_xlabel("ROC AUC, held-out posterior draws (144 configurations)")
+ax.set_xlabel("ROC AUC (144 confirmation configurations)")
+ax.grid(axis="x", alpha=0.25)
+ax.set_axisbelow(True)
+ax.spines[["top", "right", "left"]].set_visible(False)
 
 for i, value in enumerate(values):
-    ax.text(value + 0.004, i, f"{value:.3f}", va="center", fontsize=9)
+    ax.text(
+        value + 0.003, i,
+        f"{value:.4f}",
+        va="center", fontsize=9
+    )
 
 fig.tight_layout()
-display(plt.gcf())
-plt.close()
+display(fig)
+plt.close(fig)
 ```
-
-
 
 
 ## Dependence-sensitive ecological uncertainty
@@ -923,7 +948,72 @@ To examine whether the ecological findings extend beyond a single dynamical syst
 
 $$\begin{aligned} \dot{x}_1 &= -\alpha x_1-\frac{kx_1}{K+x_1}+\rho x_2,\\ \dot{x}_2 &= \frac{kx_1}{K+x_1}-(\beta+\rho)x_2. \end{aligned}$$
 
-We perturb the initial condition of the first compartment, retaining the same first- and second-order sensitivity convention, generalized relative-entropy divergence, diagnostic definitions, and 1% first-order warning threshold used in the ecological experiment. The synthetic parameter ensemble is independently generated rather than sampled from the ecological posterior. The fixed-seed experiment contains 192 discovery and 144 held-out confirmation configurations. These configurations are independent of the ecological cases, although cases within a synthetic ensemble may share design structure.
+The synthetic ensemble is generated by independent
+uniform sampling of the model parameters and initial states:
+
+| Quantity | Sampling interval |
+|---|---:|
+| $\alpha$ | $[0.05,0.35]$ |
+| $\beta$ | $[0.05,0.35]$ |
+| $k$ | $[0.5,2.0]$ |
+| $K$ | $[0.5,4.0]$ |
+| $\rho$ | $[0.05,0.5]$ |
+| $x_1(0)$ | $[1,10]$ |
+| $x_2(0)$ | $[1,10]$ |
+
+The initial first-compartment state is perturbed by
+
+$$
+\varepsilon=0.20x_1(0).
+$$
+
+The reference, sensitivity and perturbed trajectories
+are integrated using DOP853 with relative tolerance
+$10^{-10}$ and absolute tolerance $10^{-12}$,
+evaluated at 41 equally spaced times over $[0,5]$.
+The reference, exact perturbed, first-order and
+second-order trajectories are checked for positivity.
+
+The synthetic benchmark retains the ecological
+first- and second-order sensitivity convention,
+weighted I-divergence and diagnostic constructions.
+
+One numerical convention differs between the benchmarks:
+the synthetic divergence-error target is averaged over
+
+$$
+\mathcal T_{\mathrm{syn}}^*
+=
+\{t\in\mathcal T:t>0,\ d_*(t)>10^{-10}\},
+$$
+
+whereas the ecological target can include the initial
+time when its divergence exceeds the numerical cutoff.
+Both benchmarks evaluate the diagnostic features
+over sampled positive times.
+
+The divergence-error warning threshold remains 1%.
+The original numerical conventions are retained
+throughout the exploratory and prospective synthetic
+experiments.
+
+The original synthetic experiment comprises 192 discovery
+and 144 confirmation configurations, generated using
+seeds 2026112101 and 2026112102, respectively.
+These are independently generated synthetic cases,
+not draws from the fitted ecological posterior.
+
+Each single-feature classifier uses a base-10 logarithmic
+transformation with a feature floor of $10^{-15}$,
+standardization and logistic regression with
+regularization parameter $C=1$ and a maximum of
+2,000 iterations.
+
+Paired confirmation-case bootstrap intervals use
+1,500 replicates and seed 2026112103.
+The fitted discovery-stage classifiers remain fixed
+throughout resampling.
+
 
 ```{python}
 #| label: tbl-compartment-metrics
@@ -942,7 +1032,7 @@ display(Markdown(
     "| Method | AUC | Brier |\n"
     "|---|---:|---:|\n"
     + "".join(
-        f"| {r.method} | {r.auc} | {r.brier} |\n"
+        f"| {method_labels[r.method]} | {r.auc} | {r.brier} |\n"
         for r in compartment_display.itertuples(index=False)
     )
 ))
@@ -1021,7 +1111,7 @@ display(Markdown(
     "| Diagnostic | Divergence-warning AUC | Trajectory-warning AUC | Trajectory-warning Brier |\n"
     "|---|---:|---:|---:|\n"
     + "".join(
-        f"| {r.method} | {r.auc_divergence:.4f} | "
+        f"| {method_labels[r.method]} | {r.auc_divergence:.4f} | "
         f"{r.auc_trajectory:.4f} | {r.brier:.4f} |\n"
         for r in comparison.itertuples(index=False)
     )
@@ -1050,7 +1140,7 @@ for comparator in ("fisher_norm", "fisher_alignment", "state_norm"):
         col = f"{metric}_entropy_minus_{comparator}"
         low, high = state_boot[col].quantile([0.025, 0.975])
         state_rows.append(
-            f"| {metric.upper()} versus {comparator} | "
+            f"| {metric.upper()} versus {method_labels[comparator]} | "
             f"[{low:+.4f}, {high:+.4f}] |\n"
         )
 
