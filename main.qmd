@@ -110,6 +110,124 @@ The warning threshold and perturbation were selected during exploration and held
 
 ## Local Fisher geometry and diagnostic ranking
 
+### Auxiliary statistical interpretation
+
+The relationship between divergence functions
+and local metric structures is established in
+information geometry [@nielsen2020].
+The correspondence between Bregman divergences
+and exponential families provides additional
+context [@banerjee2005].
+
+For fixed positive weights $\omega_i$, consider
+the convex potential
+
+$$
+\Phi_\omega(x)=
+\sum_{i=1}^{d}
+\frac{x_i\log x_i-x_i}{\omega_i},
+\qquad x_i>0.
+$$
+
+Its associated Bregman divergence is precisely
+the weighted I-divergence $D_\omega(z\mid x)$
+used in this study. Its Hessian is
+
+$$
+\nabla^2\Phi_\omega(x)
+=
+\operatorname{diag}
+\left(\frac{1}{\omega_i x_i}\right).
+$$
+
+An exact statistical interpretation follows
+by introducing an auxiliary product-Poisson
+family $P_x$ with independent components
+
+$$
+Y_i\sim\operatorname{Poisson}
+\left(\frac{x_i}{\omega_i}\right).
+$$
+
+For positive states $z$ and $x$, additivity
+of the Kullback--Leibler divergence over
+independent components gives
+
+$$
+\begin{aligned}
+D_{\mathrm{KL}}(P_z\Vert P_x)
+&=
+\sum_i
+\left[
+\frac{z_i}{\omega_i}
+\log\frac{z_i}{x_i}
+-\frac{z_i}{\omega_i}
++\frac{x_i}{\omega_i}
+\right]\\
+&=D_\omega(z\mid x).
+\end{aligned}
+$$
+
+The score with respect to the state coordinate
+$x_i$ is
+
+$$
+\frac{\partial}{\partial x_i}
+\log P_x(Y)
+=
+\frac{Y_i}{x_i}-\frac{1}{\omega_i}.
+$$
+
+Its expectation is zero. Since
+$\operatorname{Var}(Y_i)=x_i/\omega_i$,
+the corresponding diagonal Fisher information
+entry is
+
+$$
+\mathcal I_{ii}(x)
+=
+\mathbb E_x
+\left[
+\left(
+\frac{Y_i}{x_i}-\frac{1}{\omega_i}
+\right)^2
+\right]
+=
+\frac{1}{\omega_i x_i}.
+$$
+
+Independence and the zero-mean score property
+imply that the off-diagonal entries vanish.
+Consequently,
+
+$$
+\mathcal I(x)=\nabla^2\Phi_\omega(x).
+$$
+
+Evaluating this matrix at the first-order
+approximation $p_1$ gives exactly the local
+metric used in the Fisher-norm and
+Fisher-alignment diagnostics.
+
+The weights are held fixed within each
+configuration. This construction is an
+auxiliary statistical representation of the
+divergence, not an observation model for the
+ecological or synthetic systems. In particular,
+the Fisher information considered here is
+with respect to the auxiliary state coordinates,
+not the fitted dynamical parameters.
+
+The general divergence--metric correspondence
+is established mathematics. Our use of this
+geometry concerns the normalized warning
+diagnostics and their local approximation
+and ranking properties.
+
+### Local approximation bounds
+
+
+
 The exact Bregman decomposition provides a geometric
 interpretation of the matched diagnostics. At a fixed
 sampled time, suppress the time argument and write
